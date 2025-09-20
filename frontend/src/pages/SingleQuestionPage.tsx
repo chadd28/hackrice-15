@@ -292,6 +292,7 @@ function SingleQuestionPage(): React.ReactElement {
         ]);
         
         console.log('Grader response:', gradeResp);
+<<<<<<< HEAD
         if (videoAnalysis.status === 'fulfilled' && videoAnalysis.value) {
           console.log('Video analysis response:', videoAnalysis.value);
         } else if (videoAnalysis.status === 'rejected') {
@@ -305,6 +306,28 @@ function SingleQuestionPage(): React.ReactElement {
           
           // Add presentation analysis if available
           if (videoAnalysis.status === 'fulfilled' && videoAnalysis.value?.analysis && combinedFeedback) {
+=======
+        
+        // Wait for video analysis to complete if it was started
+        let videoAnalysis = null;
+        if (videoAnalysisPromise) {
+          try {
+            videoAnalysis = { status: 'fulfilled', value: await videoAnalysisPromise };
+            console.log('Video analysis response:', videoAnalysis.value);
+          } catch (videoErr) {
+            videoAnalysis = { status: 'rejected', reason: videoErr };
+            console.error('Video analysis failed:', videoAnalysis.reason);
+          }
+        }
+        
+        // Combine results if both are available
+        let combinedFeedback = null;
+        if (gradeResp.success) {
+          combinedFeedback = gradeResp.feedback || null;
+          
+          // Add presentation analysis if available
+          if (videoAnalysis && videoAnalysis.status === 'fulfilled' && videoAnalysis.value?.analysis) {
+>>>>>>> c91411b (Add files)
             const analysis = videoAnalysis.value.analysis;
             combinedFeedback = {
               ...combinedFeedback,

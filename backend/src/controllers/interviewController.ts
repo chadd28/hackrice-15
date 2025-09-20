@@ -6,11 +6,6 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { PDFExtract } from 'pdf-extract';
 
-// Extend Request interface to include file property
-interface MulterRequest extends Request {
-  file?: Express.Multer.File;
-}
-
 // Configure multer for file uploads
 const upload = multer({
   dest: 'uploads/',
@@ -157,7 +152,7 @@ async function cleanupFile(filePath: string): Promise<void> {
  */
 export const uploadFile = [
   upload.single('file'),
-  async (req: MulterRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { type } = req.body;
       const sessionId = req.headers['x-session-id'] as string;

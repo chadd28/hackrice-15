@@ -25,6 +25,7 @@ export interface ProcessedContent {
 }
 
 export interface GeneratedQuestions {
+  technical?: Question[];
   behavioral: Question[];
   technical: Question[];
 }
@@ -32,7 +33,7 @@ export interface GeneratedQuestions {
 export interface Question {
   id: string;
   question: string;
-  category: 'behavioral';
+  category: 'technical' | 'behavioral';
   difficulty: 'easy' | 'medium' | 'hard';
   tags: string[]; // e.g., ['leadership', 'teamwork'], ['company-fit', 'motivation']
   context?: string; // Additional context for the question
