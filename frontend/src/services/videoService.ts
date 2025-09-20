@@ -111,8 +111,8 @@ export const videoService = {
 
         console.log('Recording stopped:', {
           videoDuration: `${duration}ms`,
-          videoSize: `${videoBlob.size} bytes`,
-          audioSize: `${audioBlob.size} bytes`
+          videoSize: `${videoBlob.size} bytes (${(videoBlob.size / 1024 / 1024).toFixed(2)} MB)`,
+          audioSize: `${audioBlob.size} bytes (${(audioBlob.size / 1024 / 1024).toFixed(2)} MB)`
         });
 
         onStop(videoResult, audioResult);
@@ -332,7 +332,8 @@ export const videoService = {
         audio: hasAudioInput ? {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
+          autoGainControl: true,
+          sampleRate: { ideal: 16000, max: 48000 } // Prefer 16kHz for STT optimization
         } : false
       };
     } catch (error) {
