@@ -23,6 +23,11 @@ export const analyzeInterviewPresence = async (
   const presentationWeaknesses: string[] = [];
 
   console.log('🎯 Starting Gemini visual behavioral analysis...');
+  console.log('📷 Image data available:', !!imageData);
+  if (imageData) {
+    console.log('📷 Image data length:', imageData.length);
+    console.log('📷 Image data starts with base64 prefix:', imageData.startsWith('data:image/'));
+  }
 
   if (imageData) {
     try {
@@ -60,8 +65,6 @@ PRIORITY CRITERIA (Focus heavily on these):
 - Observable energy and enthusiasm through face?
 - Expression intensity that shows interest?
 
-SECONDARY CRITERIA:
-
 3. Professional Yet Approachable Expression:
 - Maintains professional baseline with appropriate warmth?
 - Balanced serious yet friendly demeanor?
@@ -93,6 +96,10 @@ Return ONLY a JSON object with exactly this format:
 IMPORTANT: Focus descriptions on EYE CONTACT and VISIBLE ENTHUSIASM first. Only include actual observable behaviors. No numbers or statistics.`;
 
       const cleanImageData = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
+      console.log('🧹 Cleaned image data length:', cleanImageData.length);
+      console.log('🧹 First 50 chars of cleaned data:', cleanImageData.substring(0, 50));
+      
+      console.log('🤖 Sending to Gemini API...');
       
       const result = await model.generateContent([
         prompt,
@@ -106,6 +113,7 @@ IMPORTANT: Focus descriptions on EYE CONTACT and VISIBLE ENTHUSIASM first. Only 
 
       const responseText = result.response.text();
       console.log('🤖 Gemini visual analysis response:', responseText);
+      console.log('🤖 Response length:', responseText.length);
 
       try {
         let jsonText = responseText;
