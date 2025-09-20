@@ -43,6 +43,7 @@ function LandingPage(): React.ReactElement {
             <NavLink>Docs</NavLink>
             <NavLink>GitHub</NavLink>
             <NavLink href="/test-tts">Test TTS</NavLink>
+            <NavLink href="/speech-to-text">Speech to Text</NavLink>
           </div>
           <DarkGlowButton 
             to="#get-started" 
