@@ -1,0 +1,352 @@
+[
+  {
+    "id": 1,
+    "role": "Software Engineer",
+    "question": "Explain the difference between a stack and a queue. Give an example use case for each.",
+    "reference_answer": "A stack is a LIFO (last in, first out) data structure, often used in function calls and undo operations. A queue is FIFO (first in, first out), commonly used in scheduling tasks or handling requests in order.",
+    "keywords": ["stack", "queue", "LIFO", "FIFO", "use case"]
+  },
+  {
+    "id": 2,
+    "role": "Software Engineer",
+    "question": "What is the time complexity of inserting and searching in a balanced binary search tree (BST)?",
+    "reference_answer": "In a balanced BST (like AVL or Red-Black Tree), both insertion and search operations take O(log n) time on average, because the tree height is kept proportional to log n.",
+    "keywords": ["BST", "balanced tree", "insertion", "search", "O(log n)"]
+  },
+  {
+    "id": 3,
+    "role": "Software Engineer",
+    "question": "What are hash collisions, and how can they be resolved?",
+    "reference_answer": "A collision occurs when two keys hash to the same index. They can be resolved using chaining (linked lists at each index) or open addressing (linear probing, quadratic probing, double hashing).",
+    "keywords": ["hash collisions", "chaining", "open addressing", "linear probing"]
+  },
+  {
+    "id": 4,
+    "role": "Software Engineer",
+    "question": "What is the difference between an array and a linked list?",
+    "reference_answer": "Arrays store elements in contiguous memory with O(1) random access but costly insertions/deletions. Linked lists store elements in nodes with pointers, enabling efficient insertions/deletions but O(n) access.",
+    "keywords": ["array", "linked list", "contiguous memory", "insertions", "deletions"]
+  },
+  {
+    "id": 5,
+    "role": "Software Engineer",
+    "question": "Explain the difference between depth-first search (DFS) and breadth-first search (BFS).",
+    "reference_answer": "DFS explores as deep as possible along a branch before backtracking, typically using a stack or recursion. BFS explores neighbors first level by level, using a queue.",
+    "keywords": ["DFS", "BFS", "graph traversal", "stack", "queue"]
+  },
+  {
+    "id": 6,
+    "role": "Software Engineer",
+    "question": "What are the key principles of object-oriented programming (OOP)?",
+    "reference_answer": "The four main principles are encapsulation, abstraction, inheritance, and polymorphism.",
+    "keywords": ["OOP", "encapsulation", "abstraction", "inheritance", "polymorphism"]
+  },
+  {
+    "id": 7,
+    "role": "Software Engineer",
+    "question": "What is the difference between a process and a thread?",
+    "reference_answer": "A process is an independent program with its own memory space. A thread is a lightweight unit of execution within a process, sharing memory but running independently.",
+    "keywords": ["process", "thread", "memory", "execution"]
+  },
+  {
+    "id": 8,
+    "role": "Software Engineer",
+    "question": "What is dynamic programming, and when is it useful?",
+    "reference_answer": "Dynamic programming is a method of solving problems by breaking them down into overlapping subproblems and storing results to avoid recomputation. It is useful for optimization problems like shortest paths or knapsack.",
+    "keywords": ["dynamic programming", "subproblems", "memoization", "optimization"]
+  },
+  {
+    "id": 9,
+    "role": "Software Engineer",
+    "question": "Explain big-O, big-Theta, and big-Omega notations.",
+    "reference_answer": "Big-O describes the upper bound of runtime growth. Big-Omega describes the lower bound. Big-Theta describes a tight bound (both upper and lower).",
+    "keywords": ["Big-O", "Big-Theta", "Big-Omega", "runtime", "complexity"]
+  },
+  {
+    "id": 10,
+    "role": "Software Engineer",
+    "question": "What is the difference between SQL and NoSQL databases?",
+    "reference_answer": "SQL databases are relational, schema-based, and use structured query language. NoSQL databases are non-relational, schema-flexible, and optimized for scalability and unstructured data.",
+    "keywords": ["SQL", "NoSQL", "relational", "schema", "scalability"]
+  },
+  {
+    "id": 11,
+    "role": "Software Engineer",
+    "question": "What is the difference between concurrency and parallelism?",
+    "reference_answer": "Concurrency is about dealing with multiple tasks at once conceptually (e.g., task switching), while parallelism is about executing multiple tasks simultaneously on different processors or cores.",
+    "keywords": ["concurrency", "parallelism", "multithreading", "multiprocessing"]
+  },
+  {
+    "id": 12,
+    "role": "Software Engineer",
+    "question": "Explain the concept of RESTful APIs. What are some common HTTP methods used?",
+    "reference_answer": "A RESTful API follows Representational State Transfer principles, using stateless communication and resources identified by URLs. Common methods include GET (read), POST (create), PUT/PATCH (update), and DELETE (remove).",
+    "keywords": ["REST", "API", "HTTP methods", "GET", "POST", "PUT", "DELETE"]
+  },
+  {
+    "id": 13,
+    "role": "Software Engineer",
+    "question": "What is memoization, and how is it different from caching?",
+    "reference_answer": "Memoization is a programming technique where results of expensive function calls are stored and reused. Caching is a broader concept of storing data for reuse, which can apply beyond function calls.",
+    "keywords": ["memoization", "caching", "function calls", "reuse"]
+  },
+  {
+    "id": 14,
+    "role": "Software Engineer",
+    "question": "What is a deadlock, and how can it be prevented?",
+    "reference_answer": "A deadlock occurs when multiple processes wait indefinitely for resources held by each other. Prevention strategies include avoiding circular wait, using resource ordering, and employing timeouts.",
+    "keywords": ["deadlock", "resources", "circular wait", "prevention"]
+  },
+  {
+    "id": 15,
+    "role": "Software Engineer",
+    "question": "What is the difference between TCP and UDP?",
+    "reference_answer": "TCP is a connection-oriented protocol ensuring reliable delivery with error-checking. UDP is connectionless, faster, but does not guarantee delivery.",
+    "keywords": ["TCP", "UDP", "protocols", "connection-oriented", "connectionless"]
+  },
+  {
+    "id": 16,
+    "role": "Software Engineer",
+    "question": "What are design patterns, and why are they useful?",
+    "reference_answer": "Design patterns are reusable solutions to common software design problems. They improve code readability, maintainability, and standardization.",
+    "keywords": ["design patterns", "software design", "maintainability", "reuse"]
+  },
+  {
+    "id": 17,
+    "role": "Software Engineer",
+    "question": "What is garbage collection in Java?",
+    "reference_answer": "Garbage collection automatically reclaims memory by removing objects that are no longer referenced, helping prevent memory leaks.",
+    "keywords": ["garbage collection", "Java", "memory management"]
+  },
+  {
+    "id": 18,
+    "role": "Software Engineer",
+    "question": "What is the difference between functional and imperative programming?",
+    "reference_answer": "Functional programming focuses on immutability and pure functions without side effects. Imperative programming emphasizes explicit step-by-step commands to change state.",
+    "keywords": ["functional programming", "imperative programming", "immutability", "state"]
+  },
+  {
+    "id": 19,
+    "role": "Software Engineer",
+    "question": "What is the CAP theorem in distributed systems?",
+    "reference_answer": "CAP theorem states that a distributed system can only guarantee two of the following three: Consistency, Availability, and Partition tolerance.",
+    "keywords": ["CAP theorem", "consistency", "availability", "partition tolerance"]
+  },
+  {
+    "id": 20,
+    "role": "Software Engineer",
+    "question": "What is containerization, and how does Docker help with it?",
+    "reference_answer": "Containerization packages applications with their dependencies into isolated environments. Docker simplifies creating, deploying, and running containers consistently across systems.",
+    "keywords": ["containerization", "Docker", "dependencies", "isolation"]
+  },
+  {
+    "id": 21,
+    "role": "Data Analyst",
+    "question": "What is the difference between an INNER JOIN and a LEFT JOIN in SQL?",
+    "reference_answer": "An INNER JOIN returns only rows with matching values in both tables. A LEFT JOIN returns all rows from the left table, and matched rows from the right; unmatched rows from the right appear as NULL.",
+    "keywords": ["SQL", "INNER JOIN", "LEFT JOIN", "matching rows"]
+  },
+  {
+    "id": 22,
+    "role": "Data Analyst",
+    "question": "How would you handle missing values in a dataset before analysis?",
+    "reference_answer": "Options include removing rows with missing values, imputing with mean/median/mode, forward/backward filling in time series, or using model-based imputation depending on context.",
+    "keywords": ["missing values", "imputation", "data cleaning"]
+  },
+  {
+    "id": 23,
+    "role": "Data Analyst",
+    "question": "What is normalization in databases, and why is it important?",
+    "reference_answer": "Normalization organizes database tables to reduce redundancy and improve integrity. It ensures data consistency and efficient storage.",
+    "keywords": ["normalization", "databases", "redundancy", "integrity"]
+  },
+  {
+    "id": 24,
+    "role": "Data Analyst",
+    "question": "Explain the difference between clustered and non-clustered indexes in SQL.",
+    "reference_answer": "A clustered index determines the physical order of data in the table and there can only be one per table. Non-clustered indexes are separate structures that reference the data and multiple can exist.",
+    "keywords": ["clustered index", "non-clustered index", "SQL", "performance"]
+  },
+  {
+    "id": 25,
+    "role": "Data Analyst",
+    "question": "What is the difference between OLTP and OLAP systems?",
+    "reference_answer": "OLTP systems are optimized for transactional processing with many small queries. OLAP systems are optimized for analytical queries on large datasets, often used in data warehouses.",
+    "keywords": ["OLTP", "OLAP", "transactional", "analytical"]
+  },
+  {
+    "id": 26,
+    "role": "Data Analyst",
+    "question": "What is the difference between variance and standard deviation?",
+    "reference_answer": "Variance measures the average squared deviation from the mean. Standard deviation is the square root of variance, giving a measure in the same units as the data.",
+    "keywords": ["variance", "standard deviation", "statistics"]
+  },
+  {
+    "id": 27,
+    "role": "Data Analyst",
+    "question": "What is the difference between supervised and unsupervised learning?",
+    "reference_answer": "Supervised learning uses labeled data to train models. Unsupervised learning works with unlabeled data to discover patterns and groupings.",
+    "keywords": ["supervised learning", "unsupervised learning", "labeled data", "patterns"]
+  },
+  {
+    "id": 28,
+    "role": "Data Analyst",
+    "question": "What is a primary key in a relational database?",
+    "reference_answer": "A primary key is a unique identifier for each record in a table, ensuring entity integrity.",
+    "keywords": ["primary key", "relational database", "unique identifier"]
+  },
+  {
+    "id": 29,
+    "role": "Data Analyst",
+    "question": "Explain correlation vs. causation.",
+    "reference_answer": "Correlation measures the relationship between two variables, but it does not imply that one causes the other. Causation means one variable directly affects the other.",
+    "keywords": ["correlation", "causation", "statistics", "relationship"]
+  },
+  {
+    "id": 30,
+    "role": "Data Analyst",
+    "question": "What is a data warehouse, and how is it different from a transactional database?",
+    "reference_answer": "A data warehouse is optimized for analytics and stores historical data integrated from multiple sources. Transactional databases handle day-to-day operations and are optimized for fast writes.",
+    "keywords": ["data warehouse", "transactional database", "analytics", "historical data"]
+  },
+  {
+    "id": 31,
+    "role": "Data Analyst",
+    "question": "What is the difference between precision and recall in classification problems?",
+    "reference_answer": "Precision measures the proportion of true positives among predicted positives. Recall measures the proportion of true positives among all actual positives.",
+    "keywords": ["precision", "recall", "classification", "evaluation"]
+  },
+  {
+    "id": 32,
+    "role": "Data Analyst",
+    "question": "What is data normalization in feature scaling?",
+    "reference_answer": "Data normalization rescales features to a standard range (often [0,1]) so they contribute equally to models sensitive to magnitude differences.",
+    "keywords": ["normalization", "feature scaling", "rescaling"]
+  },
+  {
+    "id": 33,
+    "role": "Data Analyst",
+    "question": "What is SQL aggregation, and what are some common aggregation functions?",
+    "reference_answer": "Aggregation summarizes data using functions such as COUNT, SUM, AVG, MIN, and MAX, often grouped by specific columns.",
+    "keywords": ["aggregation", "SQL", "COUNT", "SUM", "AVG", "MIN", "MAX"]
+  },
+  {
+    "id": 34,
+    "role": "Data Analyst",
+    "question": "What is a star schema in data warehousing?",
+    "reference_answer": "A star schema is a database design for data warehouses where a central fact table is connected to multiple dimension tables.",
+    "keywords": ["star schema", "data warehouse", "fact table", "dimension table"]
+  },
+  {
+    "id": 35,
+    "role": "Data Analyst",
+    "question": "What is the difference between a histogram and a bar chart?",
+    "reference_answer": "A histogram shows frequency distributions of continuous data by bins. A bar chart shows categorical data comparisons with separate bars.",
+    "keywords": ["histogram", "bar chart", "continuous data", "categorical data"]
+  },
+  {
+    "id": 36,
+    "role": "Machine Learning Engineer",
+    "question": "What is the bias-variance tradeoff in machine learning?",
+    "reference_answer": "Bias is error from overly simple models, while variance is error from overly complex models that overfit. The tradeoff is about balancing the two to achieve the lowest total error.",
+    "keywords": ["bias", "variance", "tradeoff", "overfitting", "underfitting"]
+  },
+  {
+    "id": 37,
+    "role": "Machine Learning Engineer",
+    "question": "Why is feature scaling important before training models like logistic regression or k-nearest neighbors?",
+    "reference_answer": "Feature scaling ensures that all features contribute equally by normalizing their ranges. Algorithms like logistic regression and kNN are sensitive to feature magnitude, so scaling improves convergence and accuracy.",
+    "keywords": ["feature scaling", "logistic regression", "kNN", "normalization", "standardization"]
+  },
+  {
+    "id": 38,
+    "role": "Machine Learning Engineer",
+    "question": "What is gradient descent, and why is it important?",
+    "reference_answer": "Gradient descent is an optimization algorithm that updates model parameters by moving in the direction of the negative gradient of the loss function, helping minimize error.",
+    "keywords": ["gradient descent", "optimization", "loss function", "parameters"]
+  },
+  {
+    "id": 39,
+    "role": "Machine Learning Engineer",
+    "question": "What is regularization, and why is it used?",
+    "reference_answer": "Regularization adds a penalty term to the loss function to discourage overly complex models and reduce overfitting. Common techniques include L1 (Lasso) and L2 (Ridge).",
+    "keywords": ["regularization", "L1", "L2", "overfitting", "penalty"]
+  },
+  {
+    "id": 40,
+    "role": "Machine Learning Engineer",
+    "question": "What is the difference between classification and regression?",
+    "reference_answer": "Classification predicts discrete labels, while regression predicts continuous values.",
+    "keywords": ["classification", "regression", "labels", "continuous values"]
+  },
+  {
+    "id": 41,
+    "role": "Machine Learning Engineer",
+    "question": "What is cross-validation, and why is it useful?",
+    "reference_answer": "Cross-validation splits the dataset into multiple folds, training on some and testing on others. It reduces overfitting risk and provides more reliable model evaluation.",
+    "keywords": ["cross-validation", "model evaluation", "overfitting", "k-fold"]
+  },
+  {
+    "id": 42,
+    "role": "Machine Learning Engineer",
+    "question": "What are precision, recall, and F1-score?",
+    "reference_answer": "Precision measures positive predictive accuracy, recall measures completeness of positive predictions, and F1-score balances the two with a harmonic mean.",
+    "keywords": ["precision", "recall", "F1-score", "classification"]
+  },
+  {
+    "id": 43,
+    "role": "Machine Learning Engineer",
+    "question": "What is overfitting, and how can it be mitigated?",
+    "reference_answer": "Overfitting happens when a model learns noise instead of signal. It can be mitigated with regularization, more training data, dropout, or simpler models.",
+    "keywords": ["overfitting", "regularization", "dropout", "simpler models"]
+  }
+    {
+    "id": 44,
+    "role": "Machine Learning Engineer",
+    "question": "What is a confusion matrix?",
+    "reference_answer": "A confusion matrix is a table showing true positives, false positives, true negatives, and false negatives. It is used to evaluate the performance of a classification model.",
+    "keywords": ["confusion matrix", "true positive", "false positive", "classification"]
+  },
+  {
+    "id": 45,
+    "role": "Machine Learning Engineer",
+    "question": "What is the difference between bagging and boosting?",
+    "reference_answer": "Bagging trains multiple models in parallel on bootstrapped samples and aggregates their predictions to reduce variance. Boosting trains models sequentially, each focusing on the errors of the previous, to reduce bias.",
+    "keywords": ["bagging", "boosting", "ensemble", "variance", "bias"]
+  },
+  {
+    "id": 46,
+    "role": "Machine Learning Engineer",
+    "question": "What is a neural network activation function, and why is it important?",
+    "reference_answer": "An activation function introduces non-linearity into the network, allowing it to learn complex patterns. Common examples are ReLU, sigmoid, and tanh.",
+    "keywords": ["activation function", "non-linearity", "ReLU", "sigmoid", "tanh"]
+  },
+  {
+    "id": 47,
+    "role": "Machine Learning Engineer",
+    "question": "What is dropout in neural networks?",
+    "reference_answer": "Dropout is a regularization technique where random neurons are 'dropped' during training, preventing co-adaptation and reducing overfitting.",
+    "keywords": ["dropout", "neural networks", "regularization", "overfitting"]
+  },
+  {
+    "id": 48,
+    "role": "Machine Learning Engineer",
+    "question": "What is the difference between batch gradient descent and stochastic gradient descent?",
+    "reference_answer": "Batch gradient descent uses the entire dataset to compute the gradient per update, while stochastic gradient descent updates parameters using one sample at a time. Mini-batch gradient descent balances both approaches.",
+    "keywords": ["batch gradient descent", "stochastic gradient descent", "optimization"]
+  },
+  {
+    "id": 49,
+    "role": "Machine Learning Engineer",
+    "question": "What is transfer learning?",
+    "reference_answer": "Transfer learning leverages a pre-trained model on a large dataset and fine-tunes it for a specific task, reducing training time and data requirements.",
+    "keywords": ["transfer learning", "pre-trained model", "fine-tuning"]
+  },
+  {
+    "id": 50,
+    "role": "Machine Learning Engineer",
+    "question": "What is reinforcement learning?",
+    "reference_answer": "Reinforcement learning is a paradigm where an agent learns to make decisions by interacting with an environment and receiving rewards or penalties. The goal is to maximize cumulative reward.",
+    "keywords": ["reinforcement learning", "agent", "environment", "reward"]
+  }
+]
