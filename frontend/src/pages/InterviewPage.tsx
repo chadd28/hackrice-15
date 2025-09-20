@@ -8,6 +8,8 @@ import { ttsService } from '../services/ttsService';
 import { sttService } from '../services/sttService';
 import { videoService } from '../services/videoService';
 import { behavGraderService } from '../services/behavGraderService';
+import { technicalQuestionsService } from '../services/technicalQuestionsService';
+import technicalEvaluationService from '../services/technicalEvaluationService';
 
 /**
  * Interview Page - Manages a complete behavioral interview session
@@ -50,6 +52,7 @@ function InterviewPage(): React.ReactElement {
     question: string;
     answer: string;
     feedback: any;
+    questionType: 'behavioral' | 'technical';
   }>>([]);
   
   // Ref to track feedback data synchronously
@@ -58,6 +61,7 @@ function InterviewPage(): React.ReactElement {
     question: string;
     answer: string;
     feedback: any;
+    questionType: 'behavioral' | 'technical';
   }>>([]);
   
   // Session management
@@ -166,23 +170,78 @@ function InterviewPage(): React.ReactElement {
 
       const loadedQuestions = session.questions;
       
-      // Add hardcoded technical questions
-      const technicalQuestions = [
-        {
-          id: 'tech_1',
-          question: 'Implement a function that finds the two numbers in an array that add up to a specific target. Explain your approach and analyze the time complexity.',
-          category: 'behavioral' as const, // Keep same type for simplicity
-          difficulty: 'medium' as const,
-          tags: ['algorithm', 'coding']
-        },
-        {
-          id: 'tech_2',
-          question: 'Design a simple URL shortener service like bit.ly. Explain your database schema, API design, and how you would handle scaling to millions of URLs.',
-          category: 'behavioral' as const, // Keep same type for simplicity
-          difficulty: 'hard' as const,
-          tags: ['system-design', 'architecture']
+      // Get technical questions from service instead of hardcoding
+      let technicalQuestions = [];
+      try {
+        console.log('🔧 Fetching technical questions...');
+        const techResponse = await technicalQuestionsService.selectTechnicalQuestions(
+          session.processedContent || [],
+          interviewService.getSessionId()
+        );
+        
+        if (techResponse.success && techResponse.selected) {
+          // Convert service response to our question format
+          technicalQuestions = techResponse.selected.map(q => ({
+            id: `tech_${q.id}`,
+            question: q.question,
+            category: 'behavioral' as const, // Keep same type for simplicity
+            difficulty: 'medium' as const,
+            tags: q.keywords || []
+          }));
+          console.log('📋 Full Technical Questions Details:', technicalQuestions);
+          
+          // Initialize technical evaluator for grading
+          console.log('🔧 Initializing technical evaluator...');
+          try {
+            const initResult = await technicalEvaluationService.initialize();
+            if (initResult.success) {
+              console.log('✅ Technical evaluator initialized successfully');
+            } else {
+              console.warn('⚠️ Technical evaluator initialization failed:', initResult.error);
+            }
+          } catch (initError) {
+            console.warn('⚠️ Technical evaluator initialization error:', initError);
+          }
+        } else {
+          console.warn('⚠️ Technical questions service failed, using fallback');
+          // Fallback to hardcoded questions if service fails
+          technicalQuestions = [
+            {
+              id: 'tech_fallback_1',
+              question: 'Implement a function that finds the two numbers in an array that add up to a specific target. Explain your approach and analyze the time complexity.',
+              category: 'behavioral' as const,
+              difficulty: 'medium' as const,
+              tags: ['algorithm', 'coding']
+            },
+            {
+              id: 'tech_fallback_2',
+              question: 'Design a simple URL shortener service like bit.ly. Explain your database schema, API design, and how you would handle scaling to millions of URLs.',
+              category: 'behavioral' as const,
+              difficulty: 'hard' as const,
+              tags: ['system-design', 'architecture']
+            }
+          ];
         }
-      ];
+      } catch (error) {
+        console.error('❌ Error fetching technical questions:', error);
+        // Fallback to hardcoded questions on error
+        technicalQuestions = [
+          {
+            id: 'tech_fallback_1',
+            question: 'Implement a function that finds the two numbers in an array that add up to a specific target. Explain your approach and analyze the time complexity.',
+            category: 'behavioral' as const,
+            difficulty: 'medium' as const,
+            tags: ['algorithm', 'coding']
+          },
+          {
+            id: 'tech_fallback_2',
+            question: 'Design a simple URL shortener service like bit.ly. Explain your database schema, API design, and how you would handle scaling to millions of URLs.',
+            category: 'behavioral' as const,
+            difficulty: 'hard' as const,
+            tags: ['system-design', 'architecture']
+          }
+        ];
+      }
       
       const questionsWithTechnical = {
         behavioral: loadedQuestions.behavioral,
@@ -482,26 +541,56 @@ function InterviewPage(): React.ReactElement {
 
     // Store feedback data - do this synchronously to ensure it's captured
     let feedbackResult = null;
+    let questionType: 'behavioral' | 'technical' = currentQuestionIndex < 2 ? 'behavioral' : 'technical';
     
-    // Grade the answer in background and log to console (don't show UI feedback)
+    // Grade the answer based on question type
     if (transcription && transcription.trim() && currentQuestion) {
       try {
-        console.log('📊 Sending transcript to grader...');
-        const gradeResp = await behavGraderService.gradeBehavioral(currentQuestion.question, transcription);
-        console.log('✅ Grader response received:', gradeResp);
-        feedbackResult = gradeResp.feedback || null;
-        
-        // Log feedback to console but don't show in UI
-        console.group(`🎯 Question ${currentQuestionIndex + 1} Feedback`);
-        console.log('Question:', currentQuestion.question);
-        console.log('Answer:', transcription);
-        console.log('Score:', gradeResp.feedback?.score || 'N/A');
-        console.log('Strengths:', gradeResp.feedback?.strengths || 'N/A');
-        console.log('Suggestions:', gradeResp.feedback?.suggestions || 'N/A');
-        console.groupEnd();
+        if (questionType === 'behavioral') {
+          console.log('📊 Sending transcript to behavioral grader...');
+          const gradeResp = await behavGraderService.gradeBehavioral(currentQuestion.question, transcription);
+          console.log('✅ Behavioral grader response received:', gradeResp);
+          feedbackResult = gradeResp.feedback || null;
+          
+          // Log feedback to console but don't show in UI
+          console.group(`🎯 Question ${currentQuestionIndex + 1} Behavioral Feedback`);
+          console.log('Question:', currentQuestion.question);
+          console.log('Answer:', transcription);
+          console.log('Score:', gradeResp.feedback?.score || 'N/A');
+          console.log('Strengths:', gradeResp.feedback?.strengths || 'N/A');
+          console.log('Suggestions:', gradeResp.feedback?.suggestions || 'N/A');
+          console.groupEnd();
+        } else {
+          // Technical question - use technical evaluation service
+          console.log('🔧 Sending transcript to technical evaluator...');
+          
+          // Extract the numeric ID from the technical question ID (e.g., "tech_123" -> 123)
+          const numericId = parseInt(currentQuestion.id.replace('tech_', ''));
+          
+          const evalResp = await technicalEvaluationService.evaluateAnswer(numericId, transcription);
+          console.log('✅ Technical evaluator response received:', evalResp);
+          
+          if (evalResp.success && evalResp.evaluation) {
+            feedbackResult = evalResp.evaluation;
+            
+            // Log technical feedback to console
+            console.group(`🎯 Question ${currentQuestionIndex + 1} Technical Feedback`);
+            console.log('Question:', currentQuestion.question);
+            console.log('Answer:', transcription);
+            console.log('Score:', evalResp.evaluation.score || 'N/A');
+            console.log('Similarity:', evalResp.evaluation.similarity || 'N/A');
+            console.log('Keywords Found:', evalResp.evaluation.keywordMatches || []);
+            console.log('Feedback:', evalResp.evaluation.feedback || 'N/A');
+            console.log('Suggestions:', evalResp.evaluation.suggestions || []);
+            console.groupEnd();
+          } else {
+            console.error('❌ Technical evaluation failed:', evalResp.error);
+            feedbackResult = null;
+          }
+        }
         
       } catch (gErr) {
-        console.error('❌ Behavioral grading failed:', gErr);
+        console.error(`❌ ${questionType} grading failed:`, gErr);
         feedbackResult = null;
       }
     } else {
@@ -513,7 +602,8 @@ function InterviewPage(): React.ReactElement {
       questionIndex: currentQuestionIndex,
       question: currentQuestion?.question || '',
       answer: transcription || '',
-      feedback: feedbackResult
+      feedback: feedbackResult,
+      questionType
     };
 
     // Update both state and ref for immediate access
