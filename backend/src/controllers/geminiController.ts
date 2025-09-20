@@ -99,22 +99,19 @@ ${otherContent ? `**ADDITIONAL INFORMATION:**\n${otherContent}\n` : ''}
 
 **QUESTION GENERATION INSTRUCTIONS:**
 
-Generate exactly 2 technical questions and 2 behavioral questions. 
+Generate exactly 2 behavioral questions.  
+
+**FOR BEHAVIORAL QUESTIONS (STRICT STRUCTURE):**
+- **Q1 (Resume-tailored):** Must directly reference the candidate’s resume (e.g., past experiences, internships, achievements, teamwork, leadership, extracurriculars).  
+- **Q2 (Job-tailored):** Must directly reference the target job description, focusing on behaviors relevant to success in that role (e.g., problem-solving in role context, alignment with responsibilities, values fit).  
+- If resume/job description is missing or incomplete, default to generic behavioral questions for that slot.  
 
 **FOCUS AREAS FOR RESUME ANALYSIS:**
 - PRIORITIZE: Internships, work experience, extracurricular activities, leadership roles, clubs/organizations
 - EMPHASIZE: Interpersonal experiences, teamwork, initiative, problem-solving approach, values alignment
 - MODERATE: Skills and technologies (important but not the primary focus)
-- DE-EMPHASIZE: Projects (only use 1-2 project questions maximum - focus on the learning/collaboration aspect rather than technical details)
+- DE-EMPHASIZE: Projects (only use 1 project question maximum, and focus on collaboration/learning)
 - AVOID: Grades, GPA, coursework, academic achievements (unless directly relevant to job requirements)
-
-**FOR TECHNICAL QUESTIONS:**
-- Focus on practical skills and technologies mentioned in the resume
-- Ask about approach to learning and problem-solving
-- **IF JOB DESCRIPTION IS PROVIDED**: Reference specific requirements, technologies, or responsibilities mentioned in the job posting
-- Only reference technologies/tools mentioned in the uploaded content
-- If no specific technologies are mentioned, ask general technical questions
-- Emphasize how they apply technical skills in collaborative environments
 
 **FOR BEHAVIORAL QUESTIONS - HEAVILY PRIORITIZE THESE:**
 - **COMPANY FIT & VALUES ALIGNMENT:**
@@ -185,23 +182,22 @@ Generating questions without asking about company fit when company information i
 **OUTPUT FORMAT:**
 Return valid JSON with this structure:
 
+
 {
-  "technical": [
-    {
-      "id": "tech_1",
-      "question": "Question text here",
-      "category": "technical", 
-      "difficulty": "easy|medium|hard",
-      "tags": ["relevant", "tags"]
-    }
-  ],
   "behavioral": [
     {
-      "id": "behav_1",
-      "question": "Question text here", 
+      "id": "behav_1_resume",
+      "question": "Question tailored to resume", 
       "category": "behavioral",
       "difficulty": "easy|medium|hard", 
-      "tags": ["relevant", "tags"]
+      "tags": ["resume", "experience"]
+    },
+    {
+      "id": "behav_2_job",
+      "question": "Question tailored to target job", 
+      "category": "behavioral",
+      "difficulty": "easy|medium|hard", 
+      "tags": ["job", "role", "values"]
     }
   ]
 }
@@ -210,9 +206,9 @@ Return valid JSON with this structure:
 - Are you referencing any companies/projects/technologies NOT in the uploaded content? → REMOVE THEM
 - Are you assuming experience levels not stated? → USE GENERIC QUESTIONS  
 - Are you inventing details? → STICK TO WHAT'S PROVIDED
-- **If job description was provided, did you create questions that specifically reference job requirements?** → ENSURE INTEGRATION
-- **If additional information was provided, did you incorporate those details into relevant questions?** → ENSURE USAGE
-- Are at least 3-4 questions specifically tailored to connect the candidate's background with the job requirements?
+- Did you generate exactly 2 behavioral questions (Q1 resume-tailored, Q2 job-tailored)? → ENSURE STRUCTURE
+- If job description was provided, did you integrate job requirements into Q2? → ENSURE ALIGNMENT
+- If resume was provided, did you integrate resume content into Q1? → ENSURE ALIGNMENT
 
 Generate the interview questions now, following these rules strictly:`;
 
