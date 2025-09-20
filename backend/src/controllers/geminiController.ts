@@ -102,8 +102,8 @@ Generate exactly 2 behavioral questions.
 
 **FOR BEHAVIORAL QUESTIONS (STRICT STRUCTURE):**
 - **Q1 (Resume-tailored):** Must directly reference the candidate’s resume (e.g., past experiences, internships, achievements, teamwork, leadership, extracurriculars).  
-- **Q2 (Job-tailored):** Must directly reference the target job description, focusing on behaviors relevant to success in that role (e.g., problem-solving in role context, alignment with responsibilities, values fit).  
-- If resume/job description is missing or incomplete, default to generic behavioral questions for that slot.  
+- **Q2 (Job-tailored):** Use the job description to understand what behaviors and skills are important for the role, then craft questions as a real interviewer would ask them. Do NOT repeat the wording of the job description; instead, turn it into a natural, conversational question that invites the candidate to share experiences demonstrating those skills or behaviors.
+- If resume/job description is missing or incomplete, default to behavorial questions about the job position.  
 
 **FOCUS AREAS FOR RESUME ANALYSIS:**
 - PRIORITIZE: Internships, work experience, extracurricular activities, leadership roles, clubs/organizations
