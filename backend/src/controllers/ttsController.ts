@@ -89,7 +89,7 @@ export const generateIntroduction = async (req: Request, res: Response) => {
         },
         audioConfig: { 
             audioEncoding: "MP3",
-            speakingRate: 4, // 1.0 is normal
+            speakingRate: 1.5, // 1.0 is normal
         },
       }
     );
@@ -156,7 +156,7 @@ export const askQuestion = async (req: Request, res: Response) => {
         },
         audioConfig: { 
             audioEncoding: "MP3",
-            speakingRate: 4, // 1.0 is normal
+            speakingRate: 1.5, // 1.0 is normal
          },
       }
     );

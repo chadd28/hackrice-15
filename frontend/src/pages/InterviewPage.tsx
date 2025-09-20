@@ -28,7 +28,7 @@ function InterviewPage(): React.ReactElement {
   const [interviewStarted, setInterviewStarted] = useState(false);
   
   // Questions and current state
-  const [questions, setQuestions] = useState<GeneratedQuestions>({ behavioral: [] });
+  const [questions, setQuestions] = useState<GeneratedQuestions>({ behavioral: [], technical: [] });
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -165,7 +165,31 @@ function InterviewPage(): React.ReactElement {
       }
 
       const loadedQuestions = session.questions;
-      setQuestions(loadedQuestions);
+      
+      // Add hardcoded technical questions
+      const technicalQuestions = [
+        {
+          id: 'tech_1',
+          question: 'Implement a function that finds the two numbers in an array that add up to a specific target. Explain your approach and analyze the time complexity.',
+          category: 'behavioral' as const, // Keep same type for simplicity
+          difficulty: 'medium' as const,
+          tags: ['algorithm', 'coding']
+        },
+        {
+          id: 'tech_2',
+          question: 'Design a simple URL shortener service like bit.ly. Explain your database schema, API design, and how you would handle scaling to millions of URLs.',
+          category: 'behavioral' as const, // Keep same type for simplicity
+          difficulty: 'hard' as const,
+          tags: ['system-design', 'architecture']
+        }
+      ];
+      
+      const questionsWithTechnical = {
+        behavioral: loadedQuestions.behavioral,
+        technical: technicalQuestions
+      };
+      
+      setQuestions(questionsWithTechnical);
       
       // Load session data (position and company) - store in a variable for immediate use
       const currentSessionData = {
@@ -179,13 +203,19 @@ function InterviewPage(): React.ReactElement {
       console.log('📋 Session ID:', interviewService.getSessionId());
       console.log('🏢 Position:', session.position || 'Not specified');
       console.log('🏭 Company:', session.company || 'Not specified');
-      console.log('📊 Behavioral Questions Available:', loadedQuestions.behavioral.length);
+      console.log('📊 Total Questions Available:', questionsWithTechnical.behavioral.length + questionsWithTechnical.technical.length);
       
-      // We only use the first 2 behavioral questions
-      const questionsToUse = loadedQuestions.behavioral.slice(0, 2);
-      questionsToUse.forEach((q, index) => {
-        console.log(`${index + 1}. [${q.difficulty.toUpperCase()}] ${q.question}`);
-        console.log(`   Tags: ${q.tags.join(', ')}`);
+      // Log all questions
+      console.log('🧠 Behavioral Questions:');
+      questionsWithTechnical.behavioral.forEach((q, index) => {
+        console.log(`  ${index + 1}. [${q.difficulty.toUpperCase()}] ${q.question}`);
+        console.log(`     Tags: ${q.tags.join(', ')}`);
+      });
+      
+      console.log('🔧 Technical Questions:');
+      questionsWithTechnical.technical.forEach((q, index) => {
+        console.log(`  ${index + 3}. [${q.difficulty.toUpperCase()}] ${q.question.substring(0, 100)}...`);
+        console.log(`     Tags: ${q.tags.join(', ')}`);
       });
       console.groupEnd();
       
@@ -251,21 +281,21 @@ function InterviewPage(): React.ReactElement {
   };
 
   /**
-   * Play the current behavioral question
+   * Play the current question (behavioral or technical)
    */
   const playCurrentQuestion = async () => {
     console.log('🎯 Playing question', currentQuestionIndex + 1);
     console.log('🔍 Debug - currentQuestionIndex:', currentQuestionIndex);
-    console.log('🔍 Debug - total questions available:', questions.behavioral.length);
 
-    // Since backend always sends exactly 2 questions, just check if we have questions
-    if (!questions.behavioral || questions.behavioral.length === 0) {
-      console.log('❌ No behavioral questions available');
-      return;
+    // Simple: 0-1 = behavioral, 2-3 = technical
+    let currentQuestion;
+    if (currentQuestionIndex < 2) {
+      currentQuestion = questions.behavioral[currentQuestionIndex];
+    } else {
+      currentQuestion = questions.technical[currentQuestionIndex - 2];
     }
 
-    const currentQuestion = questions.behavioral[currentQuestionIndex];
-    if (!currentQuestion) {
+    if (!currentQuestion) { 
       console.log('❌ Current question is undefined at index:', currentQuestionIndex);
       return;
     }
@@ -277,10 +307,7 @@ function InterviewPage(): React.ReactElement {
     });
 
     try {
-      // Mark that the interview has officially started
       setInterviewStarted(true);
-      
-      // Ensure we're in the right state
       setIsLoadingNextQuestion(false);
       setIsProcessing(false);
       setIsPlayingQuestion(true);
@@ -292,7 +319,6 @@ function InterviewPage(): React.ReactElement {
       await ttsService.playAudio(questionResponse.audioContent);
       console.log('✅ Question completed, auto-starting recording...');
       
-      // Directly transition to recording - no flash needed
       setIsPlayingQuestion(false);
       startRecording();
       
@@ -301,7 +327,6 @@ function InterviewPage(): React.ReactElement {
       setIsPlayingQuestion(false);
       setIsLoadingNextQuestion(false);
       setIsProcessing(false);
-      // Note: Error fallback - could show error state or retry option
     }
   };
 
@@ -311,15 +336,15 @@ function InterviewPage(): React.ReactElement {
   const playQuestionAtIndex = async (questionIndex: number) => {
     console.log('🎯 Playing question at index', questionIndex + 1);
     console.log('🔍 Debug - questionIndex:', questionIndex);
-    console.log('🔍 Debug - total questions available:', questions.behavioral.length);
 
-    // Since backend always sends exactly 2 questions, just check if we have questions
-    if (!questions.behavioral || questions.behavioral.length === 0) {
-      console.log('❌ No behavioral questions available');
-      return;
+    // Simple: 0-1 = behavioral, 2-3 = technical
+    let targetQuestion;
+    if (questionIndex < 2) {
+      targetQuestion = questions.behavioral[questionIndex];
+    } else {
+      targetQuestion = questions.technical[questionIndex - 2];
     }
 
-    const targetQuestion = questions.behavioral[questionIndex];
     if (!targetQuestion) {
       console.log('❌ Target question is undefined at index:', questionIndex);
       return;
@@ -332,7 +357,6 @@ function InterviewPage(): React.ReactElement {
     });
 
     try {
-      // Ensure we're in the right state - clear any loading states
       setIsLoadingNextQuestion(false);
       setIsProcessing(false);
       setIsPlayingQuestion(true);
@@ -344,7 +368,6 @@ function InterviewPage(): React.ReactElement {
       await ttsService.playAudio(questionResponse.audioContent);
       console.log('✅ Question completed, auto-starting recording...');
       
-      // Directly transition to recording - no flash needed
       setIsPlayingQuestion(false);
       startRecording();
       
@@ -353,7 +376,6 @@ function InterviewPage(): React.ReactElement {
       setIsPlayingQuestion(false);
       setIsLoadingNextQuestion(false);
       setIsProcessing(false);
-      // Note: Error fallback - could show error state or retry option
     }
   };
 
@@ -446,7 +468,13 @@ function InterviewPage(): React.ReactElement {
       timerRef.current = null;
     }
 
-    const currentQuestion = questions.behavioral[currentQuestionIndex];
+    // Get current question - simple logic
+    let currentQuestion;
+    if (currentQuestionIndex < 2) {
+      currentQuestion = questions.behavioral[currentQuestionIndex];
+    } else {
+      currentQuestion = questions.technical[currentQuestionIndex - 2];
+    }
     if (currentQuestion) {
       // Mark question as answered
       setAnsweredQuestions(prev => new Set([...prev, currentQuestion.id]));
@@ -502,19 +530,18 @@ function InterviewPage(): React.ReactElement {
     console.log('📊 Current ref feedback items:', feedbackDataRef.current.length);
 
     // Move to next question or complete interview automatically
-    if (currentQuestionIndex < 1) {
+    // Now we have 4 total questions: 0,1,2,3
+    if (currentQuestionIndex < 3) {
       console.log(`➡️ Auto-moving to question ${currentQuestionIndex + 2}`);
-      // Don't set isProcessing to false, instead go directly to loading next question
       setIsProcessing(false);
       handleNextQuestion();
     } else {
       console.log('🎉 Interview completed!');
       console.log('📊 Final ref feedback data length:', feedbackDataRef.current.length);
       console.log('📊 Final state feedback data length:', feedbackData.length);
-      // Keep processing state until we complete the interview
       setTimeout(() => {
         handleCompleteInterviewWithData();
-      }, 1000); // Shorter delay since we're using ref data
+      }, 1000);
     }
   };
 
@@ -594,7 +621,7 @@ function InterviewPage(): React.ReactElement {
       <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-white">Loading your behavioral interview...</p>
+          <p className="text-white">Loading your mock interview...</p>
         </div>
       </div>
     );
@@ -620,8 +647,8 @@ function InterviewPage(): React.ReactElement {
     );
   }
 
-  // Get current question (always exactly 2 questions from backend)
-  const totalQuestionsToAsk = 2;
+  // Get total questions (2 behavioral + 2 technical = 4)
+  const totalQuestionsToAsk = 4;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 font-sans text-white">
@@ -637,7 +664,7 @@ function InterviewPage(): React.ReactElement {
               End Interview
             </button>
             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-              Behavioral Interview Practice
+              Ace AI Mock Interview
             </h1>
           </div>
           <div className="flex items-center gap-3">
@@ -668,7 +695,7 @@ function InterviewPage(): React.ReactElement {
           </div>
           <div className="flex justify-between text-xs text-slate-400 mt-1">
             <span>Question {currentQuestionIndex + 1} of {totalQuestionsToAsk}</span>
-            <span>Behavioral Interview</span>
+            <span>Mock Interview</span>
           </div>
         </div>
       </header>
@@ -745,7 +772,7 @@ function InterviewPage(): React.ReactElement {
                         </div>
                       </div>
                       <h3 className="text-lg font-medium text-white mb-2">Ready to Begin</h3>
-                      <p className="text-slate-400 text-sm">Click the button below to start your behavioral interview</p>
+                      <p className="text-slate-400 text-sm">Click the button below to start your mock interview</p>
                     </div>
                   </div>
                 ) : isProcessing ? (
@@ -771,7 +798,7 @@ function InterviewPage(): React.ReactElement {
                         </div>
                       </div>
                       <h3 className="text-lg font-medium text-white mb-2">Preparing Next Question</h3>
-                      <p className="text-slate-400 text-sm">Loading next behavioral question...</p>
+                      <p className="text-slate-400 text-sm">Loading next question...</p>
                     </div>
                   </div>
                 ) : isPlayingQuestion ? (
@@ -783,7 +810,7 @@ function InterviewPage(): React.ReactElement {
                           <div className="w-8 h-8 bg-purple-500 rounded-full"></div>
                         </div>
                       </div>
-                      <h3 className="text-lg font-medium text-white mb-2">Behavioral Question {currentQuestionIndex + 1}</h3>
+                      <h3 className="text-lg font-medium text-white mb-2">Question {currentQuestionIndex + 1}</h3>
                       <p className="text-slate-400 text-sm">Listen carefully to the question...</p>
                     </div>
                   </div>
