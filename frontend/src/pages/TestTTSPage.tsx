@@ -56,7 +56,7 @@ function TestTTSPage(): React.ReactElement {
           >
             <h2 className="text-xl font-semibold text-white mb-4">Test Google TTS</h2>
             <p className="text-slate-300 mb-6">
-              Click the button below to test the TTS functionality. It will say: "Hello, we are testing Google TTS!"
+              Click the button below to test the TTS functionality. It will say: "Hello! Welcome to your interview. My name is John, and I’ll be asking you a few questions today."
             </p>
             
             <button

@@ -39,13 +39,16 @@ const DarkGlowButton: React.FC<DarkGlowButtonProps> = ({
       <a 
         href={to} 
         onClick={onClick}
-        className="relative flex items-center justify-between bg-slate-900 py-3 px-6 rounded-lg text-white font-medium hover:bg-slate-800 transition-all duration-200 w-full h-full"
+        className="relative flex items-center justify-center gap-3 bg-slate-900 py-4 px-8 rounded-lg text-white font-medium hover:bg-slate-800 transition-all duration-200 w-full h-full"
       >
-        <span className="mr-3">{text}</span>
-        {icon ? (
-          icon
-        ) : (
-          <span className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center">
+        <span className="text-center">{text}</span>
+        {icon && (
+          <span className="flex-shrink-0">
+            {icon}
+          </span>
+        )}
+        {!icon && (
+          <span className="w-5 h-5 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
