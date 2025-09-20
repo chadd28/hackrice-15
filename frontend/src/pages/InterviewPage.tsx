@@ -11,7 +11,7 @@ import { behavGraderService } from '../services/behavGraderService';
 
 /**
  * Interview Page - Manages a complete behavioral interview session
- * Flows through: Introduction -> Question 1 -> Answer 1 -> Question 2 -> Answer 2 -> Complete
+ * Flows through: Introduction -> Question 1 -> Answer 1 -> Question 2 -> Answer 2 -> Complete Behavorial
  */
 function InterviewPage(): React.ReactElement {
   const navigate = useNavigate();
@@ -25,6 +25,7 @@ function InterviewPage(): React.ReactElement {
   const [recordingTime, setRecordingTime] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingNextQuestion, setIsLoadingNextQuestion] = useState(false);
+  const [interviewStarted, setInterviewStarted] = useState(false);
   
   // Questions and current state
   const [questions, setQuestions] = useState<GeneratedQuestions>({ behavioral: [] });
@@ -276,6 +277,9 @@ function InterviewPage(): React.ReactElement {
     });
 
     try {
+      // Mark that the interview has officially started
+      setInterviewStarted(true);
+      
       // Ensure we're in the right state
       setIsLoadingNextQuestion(false);
       setIsProcessing(false);
@@ -288,11 +292,9 @@ function InterviewPage(): React.ReactElement {
       await ttsService.playAudio(questionResponse.audioContent);
       console.log('✅ Question completed, auto-starting recording...');
       
-      // Auto-start recording after question completes (like SingleQuestionPage)
+      // Directly transition to recording - no flash needed
       setIsPlayingQuestion(false);
-      setTimeout(() => {
-        startRecording();
-      }, 500); // Small delay for smooth transition
+      startRecording();
       
     } catch (error) {
       console.error('❌ Error playing question:', error);
@@ -342,11 +344,9 @@ function InterviewPage(): React.ReactElement {
       await ttsService.playAudio(questionResponse.audioContent);
       console.log('✅ Question completed, auto-starting recording...');
       
-      // Auto-start recording after question completes (like SingleQuestionPage)
+      // Directly transition to recording - no flash needed
       setIsPlayingQuestion(false);
-      setTimeout(() => {
-        startRecording();
-      }, 500); // Small delay for smooth transition
+      startRecording();
       
     } catch (error) {
       console.error('❌ Error playing question:', error);
@@ -506,10 +506,7 @@ function InterviewPage(): React.ReactElement {
       console.log(`➡️ Auto-moving to question ${currentQuestionIndex + 2}`);
       // Don't set isProcessing to false, instead go directly to loading next question
       setIsProcessing(false);
-      setIsLoadingNextQuestion(true);
-      setTimeout(() => {
-        handleNextQuestion();
-      }, 1500); // Give time to show loading screen
+      handleNextQuestion();
     } else {
       console.log('🎉 Interview completed!');
       console.log('📊 Final ref feedback data length:', feedbackDataRef.current.length);
@@ -527,7 +524,6 @@ function InterviewPage(): React.ReactElement {
   const handleNextQuestion = async () => {
     const nextIndex = currentQuestionIndex + 1;
     console.log(`➡️ Moving to question ${nextIndex + 1}`);
-    setCurrentQuestionIndex(nextIndex);
 
     setTranscription('');
     setShowTranscription(false);
@@ -536,12 +532,12 @@ function InterviewPage(): React.ReactElement {
     setIsPlayingQuestion(false);
     setIsRecording(false);
     setIsProcessing(false);
+    setIsLoadingNextQuestion(true);
     
-    // Auto-start the next question after a small delay, using the nextIndex directly
-    setTimeout(() => {
-      setIsLoadingNextQuestion(false); // Only set this false right before playing
-      playQuestionAtIndex(nextIndex);
-    }, 500);
+    // Update index and start next question immediately
+    setCurrentQuestionIndex(nextIndex);
+    setIsLoadingNextQuestion(false);
+    playQuestionAtIndex(nextIndex);
   };
 
   /**
@@ -737,19 +733,19 @@ function InterviewPage(): React.ReactElement {
                       <p className="text-slate-400 text-sm">Playing introduction...</p>
                     </div>
                   </div>
-                ) : introComplete && !isPlayingQuestion && !isRecording && !isProcessing && !isLoadingNextQuestion ? (
-                  // Ready to start next question
+                ) : introComplete && !interviewStarted && !isPlayingQuestion && !isRecording && !isProcessing && !isLoadingNextQuestion ? (
+                  // Ready to start interview (only show once)
                   <div className="bg-slate-700/50 rounded-lg p-6 mb-6 flex-1 flex items-center justify-center">
                     <div className="text-center">
                       <div className="mb-4">
                         <div className="w-16 h-16 bg-blue-500/20 rounded-full mx-auto mb-4 flex items-center justify-center">
                           <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">{currentQuestionIndex + 1}</span>
+                            <Mic className="w-4 h-4 text-white" />
                           </div>
                         </div>
                       </div>
-                      <h3 className="text-lg font-medium text-white mb-2">Ready for Question {currentQuestionIndex + 1}</h3>
-                      <p className="text-slate-400 text-sm">Click the button below to hear the question</p>
+                      <h3 className="text-lg font-medium text-white mb-2">Ready to Begin</h3>
+                      <p className="text-slate-400 text-sm">Click the button below to start your behavioral interview</p>
                     </div>
                   </div>
                 ) : isProcessing ? (
@@ -774,7 +770,7 @@ function InterviewPage(): React.ReactElement {
                           <div className="w-8 h-8 bg-blue-500 rounded-full"></div>
                         </div>
                       </div>
-                      <h3 className="text-lg font-medium text-white mb-2">Preparing Question {currentQuestionIndex + 2}</h3>
+                      <h3 className="text-lg font-medium text-white mb-2">Preparing Next Question</h3>
                       <p className="text-slate-400 text-sm">Loading next behavioral question...</p>
                     </div>
                   </div>
@@ -832,13 +828,13 @@ function InterviewPage(): React.ReactElement {
 
                 {/* Action Buttons */}
                 <div className="flex gap-3">
-                  {introComplete && !isPlayingQuestion && !isRecording && !isProcessing && !isLoadingNextQuestion ? (
+                  {introComplete && !interviewStarted && !isPlayingQuestion && !isRecording && !isProcessing && !isLoadingNextQuestion ? (
                     <button
                       onClick={playCurrentQuestion}
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                     >
                       <Mic className="w-4 h-4" />
-                      Start Question {currentQuestionIndex + 1}
+                      Start Interview
                     </button>
                   ) : isRecording ? (
                     <button

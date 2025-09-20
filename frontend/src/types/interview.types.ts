@@ -80,4 +80,6 @@ export interface InterviewSetupErrors {
   companyInfo?: UploadFieldError;
   otherInfo?: UploadFieldError[];
   general?: string;
+  company?: string; // Error message for manual company input
+  position?: string; // Error message for manual position input
 }

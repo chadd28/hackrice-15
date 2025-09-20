@@ -10,6 +10,7 @@ import {
   UploadFieldError
 } from '../types/interview.types';
 import interviewService from '../services/interviewService';
+import { jobBriefService } from '../services/tavilyService';
 
 /**
  * Interview Setup Page - Main page for configuring interview data
@@ -141,7 +142,12 @@ const InterviewSetupPage: React.FC = () => {
     const hasManualInput = position.trim();
 
     if (!hasJobDescription && !hasManualInput) {
-      newErrors.general = 'Please either provide a job description or enter the position manually';
+      newErrors.general = 'Please either provide a job description or enter the position and company manually';
+    }
+
+    // If manual entry is selected and position is provided, require company
+    if (inputMethod === 'manual' && position.trim() && !company.trim()) {
+      newErrors.company = 'Company is required when entering position manually';
     }
 
     setErrors(newErrors);
@@ -195,21 +201,91 @@ const InterviewSetupPage: React.FC = () => {
         }
         // Don't throw error for optional fields
       } else if (inputMethod === 'manual') {
-        // Add position and company as text content for manual entry
+        // Webscrape job information if position is provided
         if (position.trim()) {
-          processed.push({
-            type: 'position',
-            content: `Position/Role: ${position.trim()}`,
-            method: 'text'
-          });
-        }
+          setProcessingStep('Searching for job information...');
+          try {
+            const companyName = company.trim() || 'general'; // Use 'general' if no company specified
+            const jobBrief = await jobBriefService.fetchBrief(companyName, position.trim());
+            
+            // Log the webscraped results to terminal
+            console.log('🔍 TAVILY JOB WEBSCRAPING RESULTS:');
+            console.log('=====================================');
+            
+            if (jobBrief.error || jobBrief.notFound) {
+              console.log('⚠️ No specific job information found');
+              console.log(`❌ Error: ${jobBrief.error || 'Job posting not found'}`);
+            } else {
+              console.log('✅ Job information found successfully!');
+              console.log(`Title: ${jobBrief.title}`);
+              console.log(`Company: ${jobBrief.company}`);
+              if (jobBrief.summary) {
+                console.log(`Summary: ${jobBrief.summary.slice(0, 500)}...`);
+              }
+              if (jobBrief.postingUrl) {
+                console.log(`🔗 Source: ${jobBrief.postingUrl}`);
+              }
+            }
+            console.log('=====================================\n');
 
-        if (company.trim()) {
-          processed.push({
-            type: 'company',
-            content: `Company: ${company.trim()}`,
-            method: 'text'
-          });
+            // Add position and company as basic text content
+            processed.push({
+              type: 'position',
+              content: `Position/Role: ${position.trim()}`,
+              method: 'text'
+            });
+
+            if (company.trim()) {
+              processed.push({
+                type: 'company',
+                content: `Company: ${company.trim()}`,
+                method: 'text'
+              });
+            }
+
+            // Add webscraped job information if available and valid
+            if (jobBrief.summary && !jobBrief.error && !jobBrief.notFound) {
+              const jobContent = `Job Information (webscraped from Tavily):
+
+Position: ${jobBrief.title}
+Company: ${jobBrief.company}
+
+Job Summary:
+${jobBrief.summary}
+
+${jobBrief.raw ? `Additional Details:
+${jobBrief.raw.slice(0, 1500)}...` : ''}
+
+${jobBrief.postingUrl ? `Source: ${jobBrief.postingUrl}` : ''}`;
+
+              processed.push({
+                type: 'jobDescription',
+                content: jobContent,
+                method: 'text'
+              });
+            } else {
+              console.log('💡 Using basic position/company info for AI analysis');
+            }
+            
+          } catch (error) {
+            console.error('🚨 Tavily webscraping error:', error);
+            console.log('⚠️ Continuing with basic position/company information only');
+            
+            // Still add basic position/company info even if webscraping fails
+            processed.push({
+              type: 'position',
+              content: `Position/Role: ${position.trim()}`,
+              method: 'text'
+            });
+
+            if (company.trim()) {
+              processed.push({
+                type: 'company',
+                content: `Company: ${company.trim()}`,
+                method: 'text'
+              });
+            }
+          }
         }
       }
 
@@ -398,16 +474,24 @@ const InterviewSetupPage: React.FC = () => {
 
                 <div>
                   <label htmlFor="company" className="block text-sm font-medium text-slate-300 mb-2">
-                    Company <span className="text-slate-500">(optional)</span>
+                    Company <span className="text-red-400">*</span>
                   </label>
                   <input
                     id="company"
                     type="text"
                     value={company}
-                    onChange={(e) => setCompany(e.target.value)}
+                    onChange={(e) => {
+                      setCompany(e.target.value);
+                      if (errors.company) {
+                        setErrors(prev => ({ ...prev, company: undefined }));
+                      }
+                    }}
                     placeholder="e.g., Google, Microsoft, Startup Inc..."
                     className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   />
+                  {errors.company && (
+                    <p className="mt-2 text-sm text-red-400">{errors.company}</p>
+                  )}
                 </div>
                 
                 <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
