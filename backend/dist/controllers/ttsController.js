@@ -64,7 +64,11 @@ export const generateIntroduction = async (req, res) => {
             },
             audioConfig: {
                 audioEncoding: "MP3",
+<<<<<<< HEAD
                 speakingRate: 1.5, // 1.0 is normal
+=======
+                speakingRate: 4, // 1.0 is normal
+>>>>>>> fb71cdf (Add multi modal video analysis)
             },
         });
         const audioContent = response.data.audioContent;
@@ -117,7 +121,11 @@ export const askQuestion = async (req, res) => {
             },
             audioConfig: {
                 audioEncoding: "MP3",
+<<<<<<< HEAD
                 speakingRate: 1.5, // 1.0 is normal
+=======
+                speakingRate: 4, // 1.0 is normal
+>>>>>>> fb71cdf (Add multi modal video analysis)
             },
         });
         const audioContent = response.data.audioContent;

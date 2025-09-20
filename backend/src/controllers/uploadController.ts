@@ -394,7 +394,7 @@ async function extractPdfContent(buffer: Buffer, filename: string, type: string)
         const pageText = textContent.items
           .filter((item: any) => item.str && typeof item.str === 'string')
           .map((item: any) => item.str.trim())
-          .filter(text => text.length > 0)
+          .filter((text: string) => text.length > 0)
           .join(' ');
         
         // Store individual page text for debugging
@@ -482,7 +482,7 @@ async function extractPdfContent(buffer: Buffer, filename: string, type: string)
 /**
  * Handle file upload with actual PDF text extraction
  */
-export const uploadFile = async (req: Request, res: Response) => {
+export const uploadFile = async (req: MulterRequest, res: Response) => {
   try {
     
     const { type } = req.body;

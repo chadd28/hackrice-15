@@ -11,6 +11,7 @@ import SpeechToTextPage from './pages/SpeechToTextPage'
 import InterviewSetupPage from './pages/InterviewSetupPage'
 import InterviewSessionPage from './pages/InterviewSessionPage'
 import ProtectedRoute from './components/ProtectedRoute'
+import ProtectedRoute from './components/ProtectedRoute'
 import TechnicalQuestionTestPage from './pages/TechnicalQuestionTestPage'
 
 function App(): React.ReactElement {

@@ -10,8 +10,6 @@ import sttRoutes from './routes/sttRoutes';
 import interviewRoutes from './routes/interviewRoutes';
 import behavGraderRoutes from './routes/behavGraderRoutes';
 import multiModalRoutes from './routes/multiModalRoutes';
-import jobBriefRoutes from './routes/jobBriefRoutes';
-import technicalEvaluationRoutes from './routes/technicalEvaluationRoutes';
 const app = express();
 const PORT = process.env.PORT || 3000;
 // Middleware
@@ -24,8 +22,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/stt', sttRoutes);
 app.use('/api/interview', interviewRoutes);
 app.use('/api/behav-grader', behavGraderRoutes);
-app.use("/api/tavily", jobBriefRoutes);
-app.use('/api/technical', technicalEvaluationRoutes);
 app.use('/api/multi-modal', multiModalRoutes);
 // Basic route
 app.get('/', (req, res) => {

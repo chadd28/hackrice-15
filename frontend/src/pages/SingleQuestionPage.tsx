@@ -6,6 +6,7 @@ import { sttService } from '../services/sttService';
 import { videoService } from '../services/videoService';
 import { behavGraderService, type GraderFeedback } from '../services/behavGraderService';
 import { captureVideoFrame, audioToBase64 } from '../services/multiModalService';
+import { captureVideoFrame, audioToBase64 } from '../services/multiModalService';
 
 function SingleQuestionPage(): React.ReactElement {
   const [isRecording, setIsRecording] = useState(false);
@@ -381,6 +382,29 @@ function SingleQuestionPage(): React.ReactElement {
     }
   };
 
+  const stopMultiModalAnalysis = async () => {
+    if (!audioRecorder.current) {
+      console.warn('🎯 Cannot stop audio recording: missing audio recorder');
+      return;
+    }
+    
+    try {
+      console.log('🎯 Stopping audio recording...');
+      
+      // Stop audio recording
+      if (audioRecorder.current.state === 'recording') {
+        audioRecorder.current.stop();
+        console.log('🎵 Audio recording stopped');
+      }
+      
+      // Wait a bit for the final data to be available
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+    } catch (error) {
+      console.error('❌ Failed to stop audio recording:', error);
+    }
+  };
+
   const sampleQuestion = "Tell me about a time when you had to work with a difficult team member. How did you handle the situation and what was the outcome?";
 
   return (
@@ -520,10 +544,10 @@ function SingleQuestionPage(): React.ReactElement {
                         </div>
 
                         {/* Presentation Strengths Section */}
-                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                          <h4 className="text-emerald-300 font-medium mb-2">🎯 Presentation Strengths</h4>
-                          {graderFeedback.presentationStrengths ? (
-                            Array.isArray(graderFeedback.presentationStrengths) ? (
+                        {graderFeedback.presentationStrengths && (
+                          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                            <h4 className="text-emerald-300 font-medium mb-2">🎯 Presentation Strengths</h4>
+                            {Array.isArray(graderFeedback.presentationStrengths) ? (
                               graderFeedback.presentationStrengths.length > 0 ? (
                                 <ul className="text-slate-200 text-sm space-y-1">
                                   {graderFeedback.presentationStrengths.map((strength, index) => (
@@ -531,19 +555,17 @@ function SingleQuestionPage(): React.ReactElement {
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-slate-400 text-sm italic">No presentation strengths identified</p>
+                                <p className="text-slate-400 text-sm italic">None</p>
                               )
                             ) : (
                               graderFeedback.presentationStrengths.trim() ? (
                                 <p className="text-slate-200 text-sm">{graderFeedback.presentationStrengths}</p>
                               ) : (
-                                <p className="text-slate-400 text-sm italic">No presentation strengths identified</p>
+                                <p className="text-slate-400 text-sm italic">None</p>
                               )
-                            )
-                          ) : (
-                            <p className="text-slate-400 text-sm italic">No presentation strengths identified</p>
-                          )}
-                        </div>
+                            )}
+                          </div>
+                        )}
 
                         {/* Presentation Weaknesses Section */}
                         {graderFeedback.presentationWeaknesses && (
