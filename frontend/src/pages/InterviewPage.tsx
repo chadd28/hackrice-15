@@ -740,7 +740,7 @@ function InterviewPage(): React.ReactElement {
   /**
    * Complete the interview and navigate to results using ref data
    */
-  const handleCompleteInterviewWithData = () => {
+  const handleCompleteInterviewWithData = async () => {
     const endTime = new Date();
     const duration = sessionStartTime ? Math.round((endTime.getTime() - sessionStartTime.getTime()) / 1000 / 60) : 0;
     
@@ -763,6 +763,54 @@ function InterviewPage(): React.ReactElement {
         hasFeedback: !!item.feedback
       });
     });
+
+    // Generate presentation summary from video analysis data only
+    let presentationSummary = null;
+    try {
+      console.log('📊 Aggregating presentation feedback from video analysis...');
+      
+      // Collect presentation strengths and weaknesses from video analysis per question
+      const allPresentationStrengths: string[] = [];
+      const allPresentationWeaknesses: string[] = [];
+      
+      finalFeedbackData.forEach((item, index) => {
+        if (item.feedback?.presentationStrengths) {
+          console.log(`Question ${index + 1} presentation strengths:`, item.feedback.presentationStrengths);
+          allPresentationStrengths.push(...item.feedback.presentationStrengths);
+        }
+        if (item.feedback?.presentationWeaknesses) {
+          console.log(`Question ${index + 1} presentation weaknesses:`, item.feedback.presentationWeaknesses);
+          allPresentationWeaknesses.push(...item.feedback.presentationWeaknesses);
+        }
+      });
+
+      // Remove duplicates and create summary
+      const uniqueStrengths = [...new Set(allPresentationStrengths)];
+      const uniqueWeaknesses = [...new Set(allPresentationWeaknesses)];
+      
+      console.log('📊 Aggregated presentation strengths:', uniqueStrengths);
+      console.log('📊 Aggregated presentation weaknesses:', uniqueWeaknesses);
+
+      if (uniqueStrengths.length > 0 || uniqueWeaknesses.length > 0) {
+        presentationSummary = {
+          presentationStrengths: uniqueStrengths,
+          presentationWeaknesses: uniqueWeaknesses,
+          overallPerformance: `Based on video analysis across ${finalFeedbackData.length} questions, the candidate's visual presentation was analyzed for body language, eye contact, facial expressions, and overall professional appearance.`,
+          suggestions: [
+            "Continue practicing interview answers while recording yourself to improve visual presentation",
+            "Focus on maintaining consistent eye contact with the camera",
+            "Practice professional body language and facial expressions during responses"
+          ],
+          score: uniqueStrengths.length > uniqueWeaknesses.length ? 7 : uniqueWeaknesses.length > uniqueStrengths.length ? 4 : 5
+        };
+        console.log('✅ Presentation summary created from video analysis:', presentationSummary);
+      } else {
+        console.log('⚠️ No presentation data found from video analysis');
+      }
+    } catch (error) {
+      console.error('❌ Failed to aggregate presentation data:', error);
+      // Continue without presentation summary
+    }
     
     // Navigate to feedback page with all collected data from ref
     navigate('/interview/feedback', { 
@@ -770,7 +818,8 @@ function InterviewPage(): React.ReactElement {
         duration,
         questionsAnswered: answeredQuestions.size,
         totalQuestions: totalQuestionsToAsk,
-        feedbackData: finalFeedbackData, // Use ref data
+        feedbackData: finalFeedbackData, // Individual question feedback
+        presentationSummary, // Overall presentation analysis
         completedAt: endTime.toISOString()
       }
     });

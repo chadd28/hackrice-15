@@ -9,7 +9,8 @@ import DashboardPage from './pages/DashboardPage'
 import SingleQuestionPage from './pages/SingleQuestionPage'
 import SpeechToTextPage from './pages/SpeechToTextPage'
 import InterviewSetupPage from './pages/InterviewSetupPage'
-import InterviewSessionPage from './pages/InterviewSessionPage'
+import InterviewPage from './pages/InterviewPage'
+import InterviewFeedbackPage from './pages/InterviewFeedbackPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import ProtectedRoute from './components/ProtectedRoute'
 import TechnicalQuestionTestPage from './pages/TechnicalQuestionTestPage'
@@ -66,7 +67,15 @@ function App(): React.ReactElement {
         } 
       />
       <Route 
-        path="/interview/session" 
+        path="/interview/page" 
+        element={
+          <ProtectedRoute>
+            <InterviewPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/interview/feedback" 
         element={
           <ProtectedRoute>
             <InterviewPage />

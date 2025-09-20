@@ -32,6 +32,9 @@ interface FeedbackData {
     presentationStrengths?: string[];
     presentationWeaknesses?: string[];
     areasForImprovement?: string | string[];
+    suggestions?: string | string[];
+    score?: number | string;
+    raw?: string;
   } | null;
   questionType: 'behavioral' | 'technical';
   presentationAnalysis?: {
@@ -39,12 +42,29 @@ interface FeedbackData {
     presentationWeaknesses: string[];
   };
 }
+ 
+interface PresentationSummary {
+  presentationStrengths: string[];
+  presentationWeaknesses: string[];
+  overallPerformance: string;
+  suggestions: string[];
+  score: number;
+}
+
+interface PresentationSummary {
+  presentationStrengths: string[];
+  presentationWeaknesses: string[];
+  overallPerformance: string;
+  suggestions: string[];
+  score: number;
+}
 
 interface InterviewResults {
   duration: number;
   questionsAnswered: number;
   totalQuestions: number;
   feedbackData: FeedbackData[];
+  presentationSummary?: PresentationSummary;
   completedAt: string;
 }
 
@@ -68,7 +88,7 @@ function InterviewFeedbackPage(): React.ReactElement {
     return <div></div>;
   }
 
-  const { duration, feedbackData, completedAt } = results;
+  const { duration, questionsAnswered, totalQuestions, feedbackData, presentationSummary, completedAt } = results;
   
   // Debug: Log specific feedback data
   console.log('📋 Feedback data array:', feedbackData);
@@ -155,9 +175,9 @@ function InterviewFeedbackPage(): React.ReactElement {
             <div className="bg-slate-700/50 rounded-lg p-4 text-center">
               <Target className="w-8 h-8 text-purple-400 mx-auto mb-2" />
               <div className="text-2xl font-bold text-white">
-                {averageScore !== null ? `${averageScore}/10` : 'N/A'}
+                {presentationSummary?.score || 'N/A'}
               </div>
-              <div className="text-sm text-slate-400">Avg Score</div>
+              <div className="text-sm text-slate-400">{presentationSummary?.score ? 'Overall Score' : 'Score'}</div>
             </div>
           </div>
         </motion.div>
@@ -197,18 +217,14 @@ function InterviewFeedbackPage(): React.ReactElement {
                 </div>
               </div>
 
-              {/* Your Answer */}
-              <div className="mb-6">
-                <h4 className="text-white font-medium mb-2 flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Your Answer
-                </h4>
-                <div className="bg-slate-700/50 rounded-lg p-4">
-                  <p className="text-slate-200 leading-relaxed">
-                    {item.answer || 'No transcription available'}
-                  </p>
-                </div>
-              </div>
+                  {/* Your Answer */}
+                  <div className="ml-12">
+                    <h4 className="text-white font-medium mb-2">Your Answer:</h4>
+                    <div className="bg-slate-700/50 rounded-lg p-4 mb-4">
+                      <p className="text-slate-200 leading-relaxed">
+                        {item.answer || 'No transcription available'}
+                      </p>
+                    </div>
 
               {/* AI Feedback */}
               {item.feedback ? (
@@ -529,7 +545,7 @@ function InterviewFeedbackPage(): React.ReactElement {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
           className="mt-8 flex gap-4 justify-center"
         >
           <button

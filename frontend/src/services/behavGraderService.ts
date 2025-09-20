@@ -11,6 +11,21 @@ export interface GraderFeedback {
   raw?: string;
 }
 
+export interface InterviewNote {
+  questionText: string;
+  answerText: string;
+  answerLength: number;
+  timestamp: string;
+}
+
+export interface InterviewSummary {
+  presentationStrengths: string[];
+  presentationWeaknesses: string[];
+  overallPerformance: string;
+  suggestions: string[];
+  score: number;
+}
+
 export const behavGraderService = {
   gradeBehavioral: async (
     question: string, 
@@ -32,6 +47,22 @@ export const behavGraderService = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || err.message || 'Behavioral grading failed');
+    }
+
+    const data = await res.json();
+    return data;
+  },
+
+  summarizeInterview: async (notes: InterviewNote[]): Promise<{ success: boolean; summary: InterviewSummary }> => {
+    const res = await fetch(`${API_URL}/summarize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || err.message || 'Interview summarization failed');
     }
 
     const data = await res.json();

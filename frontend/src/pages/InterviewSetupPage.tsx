@@ -342,8 +342,8 @@ ${jobBrief.postingUrl ? `Source: ${jobBrief.postingUrl}` : ''}`;
         company: inputMethod === 'manual' ? company.trim() : undefined
       });
 
-      // Navigate to actual interview session page
-      navigate('/interview/session');
+      // Navigate to actual interview page
+      navigate('/interview/page');
 
     } catch (error) {
       console.error('Interview setup error:', error);

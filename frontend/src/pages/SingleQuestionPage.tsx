@@ -6,7 +6,6 @@ import { sttService } from '../services/sttService';
 import { videoService } from '../services/videoService';
 import { behavGraderService, type GraderFeedback } from '../services/behavGraderService';
 import { captureVideoFrame, audioToBase64 } from '../services/multiModalService';
-import { captureVideoFrame, audioToBase64 } from '../services/multiModalService';
 
 function SingleQuestionPage(): React.ReactElement {
   const [isRecording, setIsRecording] = useState(false);

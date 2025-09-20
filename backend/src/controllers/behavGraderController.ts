@@ -133,3 +133,105 @@ Return only valid JSON with no additional text.`;
     res.status(500).json({ error: 'Failed to grade behavioral response' });
   }
 };
+
+export const summarizeInterview = async (req: Request, res: Response) => {
+  try {
+    console.log('Interview summarization request received:', { 
+      notesCount: req.body.notes?.length 
+    });
+
+    const { notes } = req.body;
+
+    if (!notes || !Array.isArray(notes) || notes.length === 0) {
+      console.log('Missing or invalid notes array');
+      return res.status(400).json({ error: 'Missing or invalid notes array' });
+    }
+
+    console.log('API key available:', !!process.env.GEMINI_API_KEY);
+    
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    // Format the notes for analysis
+    const formattedNotes = notes.map((note, index) => `
+Question ${index + 1}: ${note.questionText}
+Answer: ${note.answerText}
+Answer Length: ${note.answerLength} characters
+Timestamp: ${note.timestamp}
+`).join('\n---\n');
+
+    const prompt = `
+You are an interview coach analyzing an entire behavioral interview session.
+Review all the questions and answers to provide comprehensive presentation feedback.
+
+Interview Session Data:
+${formattedNotes}
+
+Based on ALL the answers provided, analyze the candidate's overall presentation skills and communication patterns.
+Focus ONLY on presentation and communication effectiveness, including:
+- Communication clarity and structure across all answers
+- Consistency in explanation quality
+- Overall professional communication style
+- Use of examples and storytelling
+- Problem-solving approach consistency
+
+Provide a comprehensive summary in JSON format:
+{
+  "presentationStrengths": ["strength 1", "strength 2", "strength 3"],
+  "presentationWeaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+  "overallPerformance": "A detailed paragraph summarizing the candidate's overall interview performance",
+  "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"],
+  "score": number (1-10 overall interview score)
+}
+
+Base the score on overall content quality, communication effectiveness, and consistency across all answers.
+Provide 3-5 specific, actionable items in each array.
+Return only valid JSON with no additional text.`;
+
+    console.log('Sending interview summary request to Gemini API...');
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    
+    console.log('Gemini response received, length:', responseText.length);
+    console.log('Gemini response preview:', responseText.substring(0, 200) + '...');
+
+    try {
+      // Clean up the response text (remove markdown code blocks if present)
+      let cleanResponseText = responseText.trim();
+      
+      if (cleanResponseText.startsWith('```json')) {
+        cleanResponseText = cleanResponseText.slice(7);
+      }
+      if (cleanResponseText.endsWith('```')) {
+        cleanResponseText = cleanResponseText.slice(0, -3);
+      }
+      
+      const summary = JSON.parse(cleanResponseText.trim());
+      
+      console.log('Successfully parsed JSON summary:', summary);
+      
+      res.json({ success: true, summary });
+
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response as JSON:', parseError);
+      console.error('Raw response:', responseText);
+      
+      // Fallback response if parsing fails
+      const fallbackSummary = {
+        presentationStrengths: ["Completed all interview questions"],
+        presentationWeaknesses: ["Unable to analyze due to technical issue"],
+        overallPerformance: "The interview was completed, but detailed analysis is unavailable due to a technical issue.",
+        suggestions: ["Practice the STAR method for structured responses", "Focus on specific examples"],
+        score: 5
+      };
+      res.json({ success: true, summary: fallbackSummary });
+    }
+
+  } catch (error) {
+    console.error('Error summarizing interview:', error);
+    console.error('Error details:', {
+      message: (error as Error).message,
+      stack: (error as Error).stack
+    });
+    res.status(500).json({ error: 'Failed to summarize interview' });
+  }
+};
