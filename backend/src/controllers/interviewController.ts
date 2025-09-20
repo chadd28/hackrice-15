@@ -30,8 +30,8 @@ const sessions = new Map<string, any>();
 async function extractPDFText(filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const pdfExtract = new PDFExtract();
-    
-    pdfExtract.extract(filePath, {}, (err, data) => {
+
+    pdfExtract.extract(filePath, {}, (err: Error | null, data: { pages: Array<{ content: Array<{ str: string }> }> } | undefined) => {
       if (err) {
         reject(new Error(`PDF extraction failed: ${err.message}`));
         return;
@@ -39,10 +39,10 @@ async function extractPDFText(filePath: string): Promise<string> {
 
       try {
         // Extract text from all pages
-        const text = data.pages
-          .map(page => 
-            page.content
-              .map(item => item.str)
+        const text = (data?.pages || [])
+          .map((page: { content: Array<{ str: string }> }) =>
+            (page.content || [])
+              .map((item: { str: string }) => item.str)
               .join(' ')
           )
           .join('\n\n');
