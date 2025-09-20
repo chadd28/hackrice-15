@@ -299,7 +299,7 @@
     "question": "What is overfitting, and how can it be mitigated?",
     "reference_answer": "Overfitting happens when a model learns noise instead of signal. It can be mitigated with regularization, more training data, dropout, or simpler models.",
     "keywords": ["overfitting", "regularization", "dropout", "simpler models"]
-  }
+  },
     {
     "id": 44,
     "role": "Machine Learning Engineer",
