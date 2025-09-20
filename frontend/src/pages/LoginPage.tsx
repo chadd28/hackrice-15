@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Lock, Mail } from 'lucide-react';
-import DarkGlowButton from '../components/DarkGlowButton';
 import { authService } from '../services/authService';
 
 function LoginPage(): React.ReactElement {

@@ -23,6 +23,8 @@ function InterviewPage(): React.ReactElement {
   const [isPlayingQuestion, setIsPlayingQuestion] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoadingNextQuestion, setIsLoadingNextQuestion] = useState(false);
   
   // Questions and current state
   const [questions, setQuestions] = useState<GeneratedQuestions>({ technical: [], behavioral: [] });
@@ -37,6 +39,14 @@ function InterviewPage(): React.ReactElement {
   
   // Store feedback data for all questions
   const [feedbackData, setFeedbackData] = useState<Array<{
+    questionIndex: number;
+    question: string;
+    answer: string;
+    feedback: any;
+  }>>([]);
+  
+  // Ref to track feedback data synchronously
+  const feedbackDataRef = useRef<Array<{
     questionIndex: number;
     question: string;
     answer: string;
@@ -320,6 +330,7 @@ function InterviewPage(): React.ReactElement {
    */
   const handleStopAnswer = async () => {
     setIsRecording(false);
+    setIsProcessing(true);
     
     // Stop video recording
     if (videoRecorderRef.current && videoRecorderRef.current.state === 'recording') {
@@ -373,31 +384,43 @@ function InterviewPage(): React.ReactElement {
       console.log('⚠️ No transcription available for grading');
     }
 
-    // Store the question data with feedback (if any)
-    if (currentQuestion) {
-      setFeedbackData(prev => {
-        const newData = [...prev, {
-          questionIndex: currentQuestionIndex,
-          question: currentQuestion.question,
-          answer: transcription || '',
-          feedback: feedbackResult
-        }];
-        console.log('📋 Updated feedback data:', newData);
-        return newData;
-      });
-    }
+    // Store the question data with feedback (if any) - use functional update to ensure latest state
+    const questionData = {
+      questionIndex: currentQuestionIndex,
+      question: currentQuestion?.question || '',
+      answer: transcription || '',
+      feedback: feedbackResult
+    };
+
+    // Update both state and ref for immediate access
+    feedbackDataRef.current = [...feedbackDataRef.current, questionData];
+
+    setFeedbackData(prev => {
+      const newData = [...prev, questionData];
+      console.log('📋 Updated feedback data:', newData);
+      console.log('📊 Total feedback items now:', newData.length);
+      return newData;
+    });
+
+    console.log('📊 Current state feedback items:', feedbackData.length);
+    console.log('📊 Current ref feedback items:', feedbackDataRef.current.length);
+
+    setIsProcessing(false);
 
     // Move to next question or complete interview automatically
     if (currentQuestionIndex < 1) {
       console.log(`➡️ Auto-moving to question ${currentQuestionIndex + 2}`);
+      setIsLoadingNextQuestion(true);
       setTimeout(() => {
         handleNextQuestion();
-      }, 1000); // Reduced delay since feedback is now processed synchronously
-    } else {
-      console.log('🎉 Interview completed!');
-      setTimeout(() => {
-        handleCompleteInterview();
-      }, 1000); // Reduced delay
+      }, 1500); // Give time to show loading screen
+    } else {    console.log('🎉 Interview completed!');
+    console.log('📊 Final ref feedback data length:', feedbackDataRef.current.length);
+    console.log('📊 Final state feedback data length:', feedbackData.length);
+    // Wait a moment, then complete with the ref data (which is immediately available)
+    setTimeout(() => {
+      handleCompleteInterviewWithData();
+    }, 1000); // Shorter delay since we're using ref data
     }
   };
 
@@ -410,6 +433,7 @@ function InterviewPage(): React.ReactElement {
 
     setTranscription('');
     setShowTranscription(false);
+    setIsLoadingNextQuestion(false);
     
     // Reset states
     setIsPlayingQuestion(false);
@@ -422,25 +446,39 @@ function InterviewPage(): React.ReactElement {
   };
 
   /**
-   * Complete the interview and navigate to results
+   * Complete the interview and navigate to results using ref data
    */
-  const handleCompleteInterview = () => {
+  const handleCompleteInterviewWithData = () => {
     const endTime = new Date();
     const duration = sessionStartTime ? Math.round((endTime.getTime() - sessionStartTime.getTime()) / 1000 / 60) : 0;
+    
+    // Use ref data which is immediately available
+    const finalFeedbackData = feedbackDataRef.current;
     
     console.log('🎯 Interview Session Summary:');
     console.log('⏱️ Duration:', `${duration} minutes`);
     console.log('✅ Questions Answered:', answeredQuestions.size);
     console.log('📊 Total Questions Asked:', totalQuestionsToAsk);
-    console.log('📋 Feedback Data:', feedbackData);
+    console.log('📋 Final Feedback Data (from ref):', finalFeedbackData);
+    console.log('📊 Number of feedback items (from ref):', finalFeedbackData.length);
     
-    // Navigate to feedback page with all collected data
+    // Log each feedback item for debugging
+    finalFeedbackData.forEach((item, index) => {
+      console.log(`Question ${index + 1}:`, {
+        questionIndex: item.questionIndex,
+        question: item.question.substring(0, 50) + '...',
+        answerLength: item.answer.length,
+        hasFeedback: !!item.feedback
+      });
+    });
+    
+    // Navigate to feedback page with all collected data from ref
     navigate('/interview/feedback', { 
       state: { 
         duration,
         questionsAnswered: answeredQuestions.size,
         totalQuestions: totalQuestionsToAsk,
-        feedbackData,
+        feedbackData: finalFeedbackData, // Use ref data
         completedAt: endTime.toISOString()
       }
     });
@@ -564,6 +602,8 @@ function InterviewPage(): React.ReactElement {
                     {isPlayingIntro ? 'Playing introduction...' :
                      isPlayingQuestion ? 'Asking question...' :
                      isRecording ? 'Listening to your answer...' :
+                     isProcessing ? 'Processing your response...' :
+                     isLoadingNextQuestion ? 'Preparing next question...' :
                      hasStarted ? 'Ready for next step' :
                      'Ready to begin interview'}
                   </p>
@@ -598,7 +638,7 @@ function InterviewPage(): React.ReactElement {
                       <p className="text-slate-400 text-sm">Playing introduction...</p>
                     </div>
                   </div>
-                ) : introComplete && !isPlayingQuestion && !isRecording ? (
+                ) : introComplete && !isPlayingQuestion && !isRecording && !isProcessing && !isLoadingNextQuestion ? (
                   // Ready to start next question
                   <div className="bg-slate-700/50 rounded-lg p-6 mb-6 flex-1 flex items-center justify-center">
                     <div className="text-center">
@@ -611,6 +651,32 @@ function InterviewPage(): React.ReactElement {
                       </div>
                       <h3 className="text-lg font-medium text-white mb-2">Ready for Question {currentQuestionIndex + 1}</h3>
                       <p className="text-slate-400 text-sm">Click the button below to hear the question</p>
+                    </div>
+                  </div>
+                ) : isProcessing ? (
+                  // Processing answer
+                  <div className="bg-slate-700/50 rounded-lg p-6 mb-6 flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-pulse mb-4">
+                        <div className="w-16 h-16 bg-yellow-500/20 rounded-full mx-auto mb-4 flex items-center justify-center">
+                          <div className="w-8 h-8 bg-yellow-500 rounded-full"></div>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-medium text-white mb-2">Processing Your Answer</h3>
+                      <p className="text-slate-400 text-sm">Analyzing response and generating feedback...</p>
+                    </div>
+                  </div>
+                ) : isLoadingNextQuestion ? (
+                  // Loading next question
+                  <div className="bg-slate-700/50 rounded-lg p-6 mb-6 flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-pulse mb-4">
+                        <div className="w-16 h-16 bg-blue-500/20 rounded-full mx-auto mb-4 flex items-center justify-center">
+                          <div className="w-8 h-8 bg-blue-500 rounded-full"></div>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-medium text-white mb-2">Preparing Question {currentQuestionIndex + 2}</h3>
+                      <p className="text-slate-400 text-sm">Loading next behavioral question...</p>
                     </div>
                   </div>
                 ) : isPlayingQuestion ? (
@@ -648,14 +714,18 @@ function InterviewPage(): React.ReactElement {
                     <div className="text-center">
                       <div className="mb-4">
                         <div className="w-16 h-16 bg-green-500/20 rounded-full mx-auto mb-4 flex items-center justify-center">
-                          <CheckCircle className="w-8 h-8 text-green-500" />
+                          {currentQuestionIndex >= 1 ? (
+                            <CheckCircle className="w-8 h-8 text-green-500" />
+                          ) : (
+                            <div className="w-8 h-8 bg-yellow-500 rounded-full animate-pulse"></div>
+                          )}
                         </div>
                       </div>
                       <h3 className="text-lg font-medium text-white mb-2">
-                        {currentQuestionIndex >= 1 ? 'Interview Complete!' : 'Processing...'}
+                        {currentQuestionIndex >= 1 ? 'Interview Complete!' : 'Processing Final Answer...'}
                       </h3>
                       <p className="text-slate-400">
-                        {currentQuestionIndex >= 1 ? 'Preparing your detailed feedback...' : 'Please wait...'}
+                        {currentQuestionIndex >= 1 ? 'Preparing your detailed feedback...' : 'Analyzing your response...'}
                       </p>
                     </div>
                   </div>
@@ -663,7 +733,7 @@ function InterviewPage(): React.ReactElement {
 
                 {/* Action Buttons */}
                 <div className="flex gap-3">
-                  {introComplete && !isPlayingQuestion && !isRecording ? (
+                  {introComplete && !isPlayingQuestion && !isRecording && !isProcessing && !isLoadingNextQuestion ? (
                     <button
                       onClick={playCurrentQuestion}
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"

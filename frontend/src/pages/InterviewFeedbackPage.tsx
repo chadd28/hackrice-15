@@ -99,16 +99,11 @@ function InterviewFeedbackPage(): React.ReactElement {
           </div>
 
           {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-slate-700/50 rounded-lg p-4 text-center">
               <Clock className="w-8 h-8 text-blue-400 mx-auto mb-2" />
               <div className="text-2xl font-bold text-white">{duration}</div>
               <div className="text-sm text-slate-400">Minutes</div>
-            </div>
-            <div className="bg-slate-700/50 rounded-lg p-4 text-center">
-              <User className="w-8 h-8 text-green-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-white">{questionsAnswered}/{totalQuestions}</div>
-              <div className="text-sm text-slate-400">Questions</div>
             </div>
             <div className="bg-slate-700/50 rounded-lg p-4 text-center">
               <Target className="w-8 h-8 text-purple-400 mx-auto mb-2" />
@@ -116,11 +111,6 @@ function InterviewFeedbackPage(): React.ReactElement {
                 {averageScore !== null ? `${averageScore}/10` : 'N/A'}
               </div>
               <div className="text-sm text-slate-400">Avg Score</div>
-            </div>
-            <div className="bg-slate-700/50 rounded-lg p-4 text-center">
-              <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-white">Complete</div>
-              <div className="text-sm text-slate-400">Status</div>
             </div>
           </div>
         </motion.div>
