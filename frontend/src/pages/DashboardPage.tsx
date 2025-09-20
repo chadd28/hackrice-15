@@ -67,7 +67,7 @@ function DashboardPage(): React.ReactElement {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
           {/* Profile Card */}
           <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
@@ -102,6 +102,25 @@ function DashboardPage(): React.ReactElement {
               className="w-full bg-gradient-to-r from-green-500 to-emerald-500 py-2 rounded-lg text-white font-medium hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
             >
               Start Single Question
+            </button>
+          </div>
+
+          {/* Technical Questions Card */}
+          <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
+                <BarChart3 className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-semibold text-white">Technical Questions</h3>
+            </div>
+            <p className="text-slate-300 text-sm mb-4">
+              Practice technical interviews with AI semantic evaluation and real-time feedback.
+            </p>
+            <button 
+              onClick={() => window.location.href = '/practice/technical'}
+              className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 py-2 rounded-lg text-white font-medium hover:from-purple-600 hover:to-indigo-600 transition-all duration-200"
+            >
+              Start Technical Practice
             </button>
           </div>
         </motion.div>
