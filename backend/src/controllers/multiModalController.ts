@@ -98,13 +98,17 @@ PRIORITY CRITERIA (Focus heavily on these):
 - Stable positioning without excessive movement?
 - Professional physical presence?
 
-MANDATORY: Always include at least 1 item in presentationStrengths. Even if the person appears nervous or unexpressive, find something positive like:
-- "Professional appearance and positioning"
-- "Maintains appropriate eye level with camera"
-- "Shows attentiveness to the interview process"
-- "Demonstrates composed and calm demeanor"
+5. Head Pose & Movement:
+- Natural head positioning vs excessive movement?
+- Composed vs restless head gestures?
 
-IMPORTANT: Do NOT repeat the same feedback item. Each strength and weakness should be unique and distinct.
+6. Gestures (Hands) - OPTIONAL:
+- If hands visible: purposeful vs excessive gesturing?
+- Note: Having no visible hands/gestures is perfectly fine and not a weakness
+
+7. Fidgeting / Self-Touch:
+- Observable nervous touching or fidgeting?
+- Composed vs restless physical behavior?
 
 Return ONLY a JSON object with exactly this format:
 {
