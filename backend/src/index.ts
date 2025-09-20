@@ -9,6 +9,7 @@ import cors from 'cors';
 import ttsRoutes from './routes/ttsRoutes';
 import authRoutes from './routes/authRoutes';
 import sttRoutes from './routes/sttRoutes';
+import behavGraderRoutes from './routes/behavGraderRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/tts', ttsRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/stt', sttRoutes);
+app.use('/api/behav-grader', behavGraderRoutes);
 
 
 // Basic route
