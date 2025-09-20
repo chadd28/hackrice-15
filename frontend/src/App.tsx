@@ -11,6 +11,7 @@ import SpeechToTextPage from './pages/SpeechToTextPage'
 import InterviewSetupPage from './pages/InterviewSetupPage'
 import InterviewPage from './pages/InterviewPage'
 import InterviewFeedbackPage from './pages/InterviewFeedbackPage'
+import JobBriefTester from './pages/JobBriefTester'
 
 function App(): React.ReactElement {
   return (
@@ -26,6 +27,7 @@ function App(): React.ReactElement {
       <Route path="/interview/setup" element={<InterviewSetupPage />} />
       <Route path="/interview/session" element={<InterviewPage />} />
       <Route path="/interview/feedback" element={<InterviewFeedbackPage />} />
+      <Route path="/job-brief-tester" element={<JobBriefTester />} />
     </Routes>
   )
 }

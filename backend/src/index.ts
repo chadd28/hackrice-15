@@ -11,6 +11,7 @@ import authRoutes from './routes/authRoutes';
 import sttRoutes from './routes/sttRoutes';
 import interviewRoutes from './routes/interviewRoutes';
 import behavGraderRoutes from './routes/behavGraderRoutes';
+import jobBriefRoutes from './routes/jobBriefRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +27,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/stt', sttRoutes);
 app.use('/api/interview', interviewRoutes);
 app.use('/api/behav-grader', behavGraderRoutes);
+app.use("/api/tavily", jobBriefRoutes);
+
 
 
 // Basic route
