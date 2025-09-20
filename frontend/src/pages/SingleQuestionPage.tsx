@@ -220,10 +220,47 @@ function SingleQuestionPage(): React.ReactElement {
       timerRef.current = null;
     }
 
-    // Stop multi-modal analysis
-    console.log('🎯 About to stop multi-modal analysis...');
-    await stopMultiModalAnalysis();
-    console.log('🎯 Multi-modal analysis stop completed');
+    // Capture video frame for multimodal analysis
+    let videoAnalysisPromise = null;
+    if (videoRef.current) {
+      try {
+        console.log('Capturing video frame for analysis...');
+        console.log('Video element dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
+        console.log('Video element readyState:', videoRef.current.readyState);
+        console.log('Video element currentTime:', videoRef.current.currentTime);
+        
+        const frameData = captureVideoFrame(videoRef.current);
+        if (frameData) {
+          console.log('Captured frame data length:', frameData.length);
+          console.log('Frame data preview:', frameData.substring(0, 100) + '...');
+          
+          // Send frame for multimodal analysis
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+          videoAnalysisPromise = fetch(`${backendUrl}/api/multi-modal/analyze`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageData: frameData,
+              transcriptText: transcription || ''
+            })
+          }).then(async res => {
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+            }
+            return res.json();
+          });
+          console.log('Video frame sent for analysis');
+        } else {
+          console.error('Failed to capture video frame - no data returned');
+        }
+      } catch (videoErr) {
+        console.error('Failed to capture video frame:', videoErr);
+      }
+    } else {
+      console.error('Video element not available for frame capture');
+    }
 
     // Send transcription to grader (transcription is already available)
     if (transcription && transcription.trim()) {
@@ -250,7 +287,33 @@ function SingleQuestionPage(): React.ReactElement {
           imageData
         );
         console.log('Grader response:', gradeResp);
-        setGraderFeedback(gradeResp.feedback || null);
+        if (videoAnalysis.status === 'fulfilled') {
+          console.log('Video analysis response:', videoAnalysis.value);
+        } else {
+          console.error('Video analysis failed:', videoAnalysis.reason);
+        }
+        
+        // Combine results if both are available
+        let combinedFeedback = null;
+        if (gradeResp.status === 'fulfilled') {
+          combinedFeedback = gradeResp.value.feedback || null;
+          
+          // Add presentation analysis if available
+          if (videoAnalysis.status === 'fulfilled' && videoAnalysis.value?.analysis) {
+            const analysis = videoAnalysis.value.analysis;
+            combinedFeedback = {
+              ...combinedFeedback,
+              presentationStrengths: analysis.presentationStrengths || [],
+              presentationWeaknesses: analysis.presentationWeaknesses || [],
+              suggestions: [
+                ...(combinedFeedback.suggestions || []),
+                ...(analysis.suggestions || [])
+              ]
+            };
+          }
+        }
+        
+        setGraderFeedback(combinedFeedback);
       } catch (gErr) {
         console.error('Behavioral grading failed:', gErr);
       }
@@ -576,18 +639,7 @@ function SingleQuestionPage(): React.ReactElement {
                     Start Question
                   </button>
                 ) : hasStarted && !isPlayingIntro && !isPlayingQuestion && !isRecording && !isReadyToAnswer ? (
-                  <div>
-                    {graderFeedback ? null : (
-                      <div className="w-full bg-blue-500/20 py-3 rounded-lg text-center border border-blue-500/30">
-                        <p className="text-blue-300 text-sm font-medium">
-                          🤖 Analyzing Response...
-                        </p>
-                        <p className="text-blue-400 text-xs mt-1">
-                          AI is reviewing your answer and preparing feedback
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  null
                 ) : (
                   <div className="space-y-3">
                     {isPlayingIntro ? (
