@@ -30,33 +30,64 @@ export const gradeBehavioral = async (req: Request, res: Response) => {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `
-You are an interview coach analyzing CONTENT ONLY (not delivery or behavior).
-Evaluate the following behavioral interview answer for content quality.
+You are an interview coach analyzing both CONTENT and PRESENTATION.
+Evaluate the following behavioral interview answer for content quality and simulated presentation strengths.
 
 Question: "${question}"
 Answer: "${answer}"
 
+Analyze both content and provide simulated presentation feedback based on the answer quality and structure.
 
-Provide concise feedback in JSON format. For suggestions, provide 1-3 specific improvements based on answer quality:
-- Strong answers: 1-2 minor refinements
-- Weak answers: 2-3 key improvements
+IMPORTANT: Always provide balanced feedback:
+- Include at least 1 genuine strengths (things the candidate did well)
+- Limit areas for improvement to constructive, actionable points
+- Focus on helping the candidate improve rather than just pointing out flaws
+- Even if the answer has issues, find something positive to highlight
 
-IMPORTANT: Return ONLY valid JSON with this structure:
+Provide structured feedback in JSON format with arrays of bullet points with concise bullet points for each category.
+Give actionable suggestions for improvement in the suggestions field. Limit your responses to 3-5 bullet points per section.
+The JSON should have the following fields:
 {
-  "strengths": "What the candidate did well (1-2 sentence)",
-  "weaknesses": "Main areas for improvement (1-2 sentence)", 
-  "suggestions": ["Most important suggestion", "Second suggestion if needed", "Third only if answer needs major work"],
-  "score": "number from 1-10"
+  "strengths": ["content strength 1", "content strength 2"],
+  "areasForImprovement": ["content improvement area 1", "content improvement area 2"], 
+  "suggestions": ["content suggestion 1", "content suggestion 2"],
+  "presentationAnalysis": {
+    "presentationStrengths": ["presentation strength 1", "presentation strength 2"],
+    "presentationWeaknesses": ["presentation weakness 1", "presentation weakness 2"]
+  },
+  "score": number (1-10)
 }
 
-Each suggestion should be actionable and under 40 words.
-    `;
+For presentation analysis, base it on the answer structure and communication style:
+- Clear communication and structure suggests good presentation skills
+- Use of specific examples indicates engaging storytelling
+- Professional language suggests confident delivery
+- Well-organized responses indicate good pace and flow
 
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
+MANDATORY: The "strengths" and "presentationStrengths" arrays must each contain at least 1 item.
+Even for weaker answers, find positive aspects like:
+- "Attempted to address the question directly"
+- "Used clear and understandable language"
+- "Showed willingness to engage with the topic"
+- "Demonstrated effort to provide specific details"
 
-        console.log('Gemini response received, length:', responseText.length);
-        console.log('Gemini response preview:', responseText.substring(0, 200));
+CRITICAL: Do NOT repeat any feedback items. Each strength, improvement area, and suggestion must be unique and distinct.
+
+Rate 1-10 based on content quality:
+- Answer relevance to the question
+- Use of specific examples with details
+- Structure and clarity of explanation
+- Demonstration of problem-solving skills
+- Professional communication style
+
+Return only valid JSON with no additional text.`;
+
+    console.log('Sending request to Gemini API...');
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    
+    console.log('Gemini response received, length:', responseText.length);
+    console.log('Gemini response preview:', responseText.substring(0, 200) + '...');
 
     try {
       // Clean up the response text (remove markdown code blocks if present)
@@ -81,10 +112,14 @@ Each suggestion should be actionable and under 40 words.
       
       // Fallback response if parsing fails
       const fallbackFeedback = {
-        strengths: [],
-        areasForImprovement: ["Unable to analyze response due to technical issue"],
-        suggestions: ["Use the STAR method for better structure"],
-        score: 5
+        strengths: ["Provided a thoughtful response to the behavioral question", "Demonstrated effort to communicate ideas clearly"],
+        areasForImprovement: ["Consider adding more specific examples to strengthen your answer"],
+        suggestions: ["Use the STAR method (Situation, Task, Action, Result) for better structure", "Include measurable outcomes when possible"],
+        presentationAnalysis: {
+          presentationStrengths: ["Communicated thoughts in an organized manner", "Showed engagement with the interview process"],
+          presentationWeaknesses: ["Consider practicing responses to improve flow and confidence"]
+        },
+        score: 6
       };
       res.json({ success: true, feedback: fallbackFeedback });
     }

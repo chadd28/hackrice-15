@@ -1,6 +1,6 @@
-import { getCohereService, CohereEmbeddingService } from './cohereEmbeddingService';
-import { getEmbeddingCache } from './embeddingCache';
-import technicalQuestions from '../data/technicalQuestions.json';
+import { getCohereService, CohereEmbeddingService } from './cohereEmbeddingService.js';
+import { getEmbeddingCache } from './embeddingCache.js';
+import technicalQuestions from '../data/technicalQuestions.json' assert { type: 'json' };
 import { GoogleGenerativeAI } from '@google/generative-ai';
 /**
  * Production-quality technical question evaluator using Cohere embeddings
@@ -256,20 +256,31 @@ SCORE: ${(combinedScore * 100).toFixed(1)}%
 KEYWORDS FOUND: ${keywordMatches.join(', ') || 'None'}
 MISSING KEYWORDS: ${question.keywords.filter(k => !keywordMatches.includes(k)).join(', ') || 'None'}
 
-Please provide 2-4 specific, actionable suggestions to improve this answer. Focus on:
+Please provide 1-2 specific, actionable suggestions to improve this answer. Focus on:
 - Technical accuracy and completeness
 - Missing key concepts or terminology
 - Areas for more detailed explanation
 - Better structure or clarity
 
-Format as a JSON array of strings. Each suggestion should be concise (max 50 words) and actionable.
-Example: ["Add more details about X concept", "Explain the relationship between Y and Z", "Include practical examples"]
+IMPORTANT: Return ONLY a valid JSON array of strings. Do NOT wrap in markdown code blocks or add any other text.
+Each suggestion should be concise (max 50 words) and actionable.
 
-Return only the JSON array, no other text.`;
+Example format:
+["Add more details about X concept", "Explain the relationship between Y and Z", "Include practical examples"]`;
             const result = await model.generateContent(prompt);
             const responseText = result.response.text().trim();
+            console.log('🤖 Gemini raw response:', responseText);
+            // Clean the response - remove markdown code blocks if present
+            let cleanedResponse = responseText;
+            if (cleanedResponse.startsWith('```json')) {
+                cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+            }
+            else if (cleanedResponse.startsWith('```')) {
+                cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+            }
+            console.log('🧹 Cleaned response:', cleanedResponse);
             // Parse the JSON response
-            const suggestions = JSON.parse(responseText);
+            const suggestions = JSON.parse(cleanedResponse);
             // Validate that it's an array of strings
             if (!Array.isArray(suggestions) || !suggestions.every(s => typeof s === 'string')) {
                 throw new Error('Invalid response format from Gemini');
@@ -277,7 +288,12 @@ Return only the JSON array, no other text.`;
             return suggestions.slice(0, 4); // Limit to 4 suggestions max
         }
         catch (error) {
-            console.error('Error generating AI suggestions:', error);
+            console.error('❌ Error generating AI suggestions:', error);
+            console.error('Error details:', {
+                name: error instanceof Error ? error.name : 'Unknown',
+                message: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined
+            });
             // Fallback to a basic suggestion
             return ['Consider providing more detailed explanation of the key concepts'];
         }

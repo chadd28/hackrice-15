@@ -1,0 +1,162 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+export const analyzeInterviewPresence = async (audioContent, imageData, transcriptText) => {
+    const strengths = [];
+    const areasForImprovement = [];
+    const suggestions = [];
+    const presentationStrengths = [];
+    const presentationWeaknesses = [];
+    console.log('🎯 Starting Gemini visual behavioral analysis...');
+    console.log('📷 Image data available:', !!imageData);
+    if (imageData) {
+        console.log('📷 Image data length:', imageData.length);
+        console.log('📷 Image data starts with base64 prefix:', imageData.startsWith('data:image/'));
+    }
+    if (imageData) {
+        try {
+            const geminiApiKey = process.env.GEMINI_API_KEY;
+            if (!geminiApiKey) {
+                presentationWeaknesses.push('Video analysis unavailable - API not configured');
+                return {
+                    strengths,
+                    areasForImprovement,
+                    suggestions,
+                    presentationStrengths,
+                    presentationWeaknesses,
+                    timestamp: new Date().toISOString()
+                };
+            }
+            const genAI = new GoogleGenerativeAI(geminiApiKey);
+            const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+            const prompt = `Analyze this interview video frame for presentation skills. Focus HEAVILY on eye contact and visible enthusiasm. Only observable visual behavior, no personality inferences.
+
+PRIORITY CRITERIA (Focus heavily on these):
+
+1. Eye Contact / Gaze (HIGH PRIORITY):
+- Is the person looking directly at camera vs looking away?
+- Face positioning - centered and engaged with viewer?
+- Direct gaze vs distracted/avoidant eye contact?
+- Professional eye engagement level?
+
+2. Passion / Enthusiasm - Visible (HIGH PRIORITY):
+- Observable genuine smiles and positive expressions?
+- Facial animation and expression variety?
+- Eyes showing engagement vs flat/disinterested?
+- Observable energy and enthusiasm through face?
+- Expression intensity that shows interest?
+
+3. Professional Yet Approachable Expression:
+- Maintains professional baseline with appropriate warmth?
+- Balanced serious yet friendly demeanor?
+- Avoiding overly exaggerated or inappropriate expressions?
+
+4. Posture / Stability:
+- Upright, confident posture vs slouched appearance?
+- Stable positioning without excessive movement?
+- Professional physical presence?
+
+5. Head Pose & Movement:
+- Natural head positioning vs excessive movement?
+- Composed vs restless head gestures?
+
+6. Gestures (Hands) - OPTIONAL:
+- If hands visible: purposeful vs excessive gesturing?
+- Note: Having no visible hands/gestures is perfectly fine and not a weakness
+
+7. Fidgeting / Self-Touch:
+- Observable nervous touching or fidgeting?
+- Composed vs restless physical behavior?
+
+Return ONLY a JSON object with exactly this format:
+{
+  "presentationStrengths": ["strength 1", "strength 2"],
+  "presentationWeaknesses": ["weakness 1", "weakness 2"]
+}
+
+IMPORTANT: Focus descriptions on EYE CONTACT and VISIBLE ENTHUSIASM first. Only include actual observable behaviors. No numbers or statistics.`;
+            const cleanImageData = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
+            console.log('🧹 Cleaned image data length:', cleanImageData.length);
+            console.log('🧹 First 50 chars of cleaned data:', cleanImageData.substring(0, 50));
+            console.log('🤖 Sending to Gemini API...');
+            const result = await model.generateContent([
+                prompt,
+                {
+                    inlineData: {
+                        data: cleanImageData,
+                        mimeType: "image/jpeg"
+                    }
+                }
+            ]);
+            const responseText = result.response.text();
+            console.log('🤖 Gemini visual analysis response:', responseText);
+            console.log('🤖 Response length:', responseText.length);
+            try {
+                let jsonText = responseText;
+                if (responseText.includes('```json')) {
+                    const jsonStart = responseText.indexOf('```json') + 7;
+                    const jsonEnd = responseText.indexOf('```', jsonStart);
+                    if (jsonEnd > jsonStart) {
+                        jsonText = responseText.substring(jsonStart, jsonEnd).trim();
+                    }
+                }
+                const analysis = JSON.parse(jsonText);
+                if (analysis.presentationStrengths && Array.isArray(analysis.presentationStrengths)) {
+                    presentationStrengths.push(...analysis.presentationStrengths);
+                }
+                if (analysis.presentationWeaknesses && Array.isArray(analysis.presentationWeaknesses)) {
+                    presentationWeaknesses.push(...analysis.presentationWeaknesses);
+                }
+                console.log('✅ Gemini visual analysis completed successfully');
+            }
+            catch (parseError) {
+                console.error('Failed to parse Gemini response:', parseError);
+                presentationWeaknesses.push('Video analysis completed but results could not be processed');
+            }
+        }
+        catch (error) {
+            console.error('Gemini visual analysis failed:', error);
+            presentationWeaknesses.push('Video analysis failed due to technical issue');
+        }
+    }
+    else {
+        presentationWeaknesses.push('No video available - cannot assess visual presentation');
+    }
+    return {
+        strengths,
+        areasForImprovement,
+        suggestions,
+        presentationStrengths,
+        presentationWeaknesses,
+        timestamp: new Date().toISOString()
+    };
+};
+export const analyzeMultiModal = async (req, res) => {
+    try {
+        const { audioContent, imageData, transcriptText } = req.body;
+        const result = await analyzeInterviewPresence(audioContent, imageData, transcriptText);
+        res.json({ success: true, analysis: result });
+    }
+    catch (error) {
+        console.error("Multi-modal analysis error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to analyze interview presence",
+            error: error instanceof Error ? error.message : "Unknown error occurred"
+        });
+    }
+};
+export const testMultiModalSetup = async (req, res) => {
+    try {
+        res.json({
+            success: true,
+            message: "Multi-modal analysis service is available",
+            timestamp: new Date().toISOString()
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Service test failed",
+            error: error instanceof Error ? error.message : "Unknown error occurred"
+        });
+    }
+};

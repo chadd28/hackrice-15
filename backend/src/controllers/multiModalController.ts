@@ -50,6 +50,29 @@ export const analyzeInterviewPresence = async (
 
       const prompt = `Analyze this interview video frame for presentation skills. Focus HEAVILY on eye contact and visible enthusiasm. Only observable visual behavior, no personality inferences.
 
+IMPORTANT: Always provide balanced feedback. Find at least 1 genuine positive presentation behaviors, even if subtle.
+
+CRITICAL: Be very careful about categorizing observations as STRENGTHS vs WEAKNESSES.
+
+POSITIVE BEHAVIORS (go in presentationStrengths):
+- Direct eye contact with camera
+- Genuine smiles and positive expressions
+- Engaged, enthusiastic facial expressions
+- Good posture and professional presence
+- Confident body language
+- Appropriate warmth and approachability
+- Professional appearance and grooming
+- Attentive and focused positioning
+- Calm and composed demeanor
+
+NEGATIVE BEHAVIORS (go in presentationWeaknesses):
+- Looking away from camera or distracted gaze
+- Neutral, flat, or unexpressive facial demeanor
+- Lack of visible enthusiasm or engagement
+- Slouched or unprofessional posture
+- Nervous fidgeting or restless behavior
+- Overly stiff or overly casual presentation
+
 PRIORITY CRITERIA (Focus heavily on these):
 
 1. Eye Contact / Gaze (HIGH PRIORITY):
@@ -75,25 +98,21 @@ PRIORITY CRITERIA (Focus heavily on these):
 - Stable positioning without excessive movement?
 - Professional physical presence?
 
-5. Head Pose & Movement:
-- Natural head positioning vs excessive movement?
-- Composed vs restless head gestures?
+MANDATORY: Always include at least 1 item in presentationStrengths. Even if the person appears nervous or unexpressive, find something positive like:
+- "Professional appearance and positioning"
+- "Maintains appropriate eye level with camera"
+- "Shows attentiveness to the interview process"
+- "Demonstrates composed and calm demeanor"
 
-6. Gestures (Hands) - OPTIONAL:
-- If hands visible: purposeful vs excessive gesturing?
-- Note: Having no visible hands/gestures is perfectly fine and not a weakness
-
-7. Fidgeting / Self-Touch:
-- Observable nervous touching or fidgeting?
-- Composed vs restless physical behavior?
+IMPORTANT: Do NOT repeat the same feedback item. Each strength and weakness should be unique and distinct.
 
 Return ONLY a JSON object with exactly this format:
 {
-  "presentationStrengths": ["strength 1", "strength 2"],
-  "presentationWeaknesses": ["weakness 1", "weakness 2"]
+  "presentationStrengths": ["unique positive behavior 1", "different positive behavior 2"],
+  "presentationWeaknesses": ["unique negative behavior 1", "different negative behavior 2"]
 }
 
-IMPORTANT: Focus descriptions on EYE CONTACT and VISIBLE ENTHUSIASM first. Only include actual observable behaviors. No numbers or statistics.`;
+CRITICAL: "Neutral and unexpressive facial demeanor" is a WEAKNESS, not a strength. Only put genuinely positive behaviors in presentationStrengths, but ensure at least 1 is always included.`;
 
       const cleanImageData = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
       console.log('🧹 Cleaned image data length:', cleanImageData.length);
@@ -150,12 +169,16 @@ IMPORTANT: Focus descriptions on EYE CONTACT and VISIBLE ENTHUSIASM first. Only 
     presentationWeaknesses.push('No video available - cannot assess visual presentation');
   }
 
+  // Remove duplicates from arrays
+  const uniqueStrengths = [...new Set(presentationStrengths)];
+  const uniqueWeaknesses = [...new Set(presentationWeaknesses)];
+
   return {
     strengths,
     areasForImprovement,
     suggestions,
-    presentationStrengths,
-    presentationWeaknesses,
+    presentationStrengths: uniqueStrengths,
+    presentationWeaknesses: uniqueWeaknesses,
     timestamp: new Date().toISOString()
   };
 };

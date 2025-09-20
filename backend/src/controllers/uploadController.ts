@@ -3,6 +3,29 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import multer, { MulterError } from 'multer';
 
+// Polyfills for Node.js environment when using pdfjs-dist
+// These are required because pdfjs-dist expects browser APIs
+if (typeof globalThis.DOMMatrix === 'undefined') {
+  // @ts-ignore
+  globalThis.DOMMatrix = class DOMMatrix {
+    constructor() {}
+  };
+}
+
+if (typeof globalThis.Path2D === 'undefined') {
+  // @ts-ignore
+  globalThis.Path2D = class Path2D {
+    constructor() {}
+  };
+}
+
+if (typeof globalThis.OffscreenCanvas === 'undefined') {
+  // @ts-ignore
+  globalThis.OffscreenCanvas = class OffscreenCanvas {
+    constructor() {}
+  };
+}
+
 // Extend Request interface to include file property
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -284,12 +307,12 @@ async function extractPdfContent(buffer: Buffer, filename: string, type: string)
     // Use pdfjs-dist legacy build for Node.js compatibility
     let pdfjsLib;
     try {
-      pdfjsLib = await import('pdfjs-dist');
+      // Import the legacy build specifically for Node.js
+      pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
       
-      // Configure worker for legacy build (optional for Node.js)
-      const GlobalWorkerOptions = pdfjsLib.GlobalWorkerOptions;
-      if (!GlobalWorkerOptions.workerSrc) {
-        GlobalWorkerOptions.workerSrc = './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs';
+      // Configure worker for legacy build (not needed in Node.js but prevents warnings)
+      if (pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs-dist/legacy/build/pdf.worker.mjs';
       }
     } catch (importError) {
       console.error('❌ Failed to import pdfjs-dist legacy:', importError);
@@ -493,6 +516,7 @@ export const uploadFile = async (req: MulterRequest, res: Response) => {
     };
     
     Object.entries(resumeKeywords).forEach(([category, count]) => {
+      console.log(`📊 Resume element '${category}': ${count} occurrences`);
     });
     
 

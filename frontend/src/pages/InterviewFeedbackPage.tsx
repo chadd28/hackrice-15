@@ -2,11 +2,13 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, CheckCircle, Target, Lightbulb, User, Brain, Star } from 'lucide-react';
+import { GraderFeedback } from '../services/behavGraderService';
+
 
 interface BehavioralFeedback {
   score?: number;
   strengths?: string;
-  suggestions?: string[] | string; // Handle both array and string formats
+  suggestions?: string;
 }
 
 interface TechnicalFeedback {
@@ -23,8 +25,19 @@ interface FeedbackData {
   questionIndex: number;
   question: string;
   answer: string;
-  feedback: BehavioralFeedback | TechnicalFeedback | null;
+  feedback: {
+    score?: number;
+    strengths?: string;
+    suggestions?: string;
+    presentationStrengths?: string[];
+    presentationWeaknesses?: string[];
+    areasForImprovement?: string | string[];
+  } | null;
   questionType: 'behavioral' | 'technical';
+  presentationAnalysis?: {
+    presentationStrengths: string[];
+    presentationWeaknesses: string[];
+  };
 }
 
 interface InterviewResults {
@@ -65,11 +78,8 @@ function InterviewFeedbackPage(): React.ReactElement {
   const validScores = (feedbackData || [])
     .map(item => {
       if (!item.feedback) return null;
-      if (item.questionType === 'behavioral') {
-        return (item.feedback as BehavioralFeedback).score;
-      } else {
-        return (item.feedback as TechnicalFeedback).score;
-      }
+      const feedback = item.feedback as GraderFeedback;
+      return typeof feedback.score === 'number' ? feedback.score : null;
     })
     .filter((score): score is number => typeof score === 'number');
   
@@ -212,30 +222,30 @@ function InterviewFeedbackPage(): React.ReactElement {
                     // Behavioral feedback rendering
                     <>
                       {/* Score */}
-                      {(item.feedback as BehavioralFeedback).score && (
+                      {(item.feedback as GraderFeedback).score && (
                         <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
                           <span className="text-slate-300 font-medium">Overall Score:</span>
                           <span className="text-xl font-bold text-green-400">
-                            {(item.feedback as BehavioralFeedback).score}/10
+                            {(item.feedback as GraderFeedback).score}/10
                           </span>
                         </div>
                       )}
                       
                       {/* Strengths */}
-                      {(item.feedback as BehavioralFeedback).strengths && (
+                      {(item.feedback as GraderFeedback).strengths && (
                         <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                           <h5 className="text-green-300 font-medium mb-2 flex items-center gap-2">
                             <CheckCircle className="w-4 h-4" />
                             Strengths
                           </h5>
                           <p className="text-slate-200 text-sm leading-relaxed">
-                            {(item.feedback as BehavioralFeedback).strengths}
+                            {(item.feedback as GraderFeedback).strengths}
                           </p>
                         </div>
                       )}
                       
                       {/* Suggestions */}
-                      {(item.feedback as BehavioralFeedback).suggestions && (
+                      {(item.feedback as GraderFeedback).suggestions && (
                         <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                           <h5 className="text-blue-300 font-medium mb-2 flex items-center gap-2">
                             <Lightbulb className="w-4 h-4" />
@@ -290,89 +300,85 @@ function InterviewFeedbackPage(): React.ReactElement {
                       )}
                     </>
                   ) : (
-                    // Technical feedback rendering
+                    // Technical feedback rendering - using unified GraderFeedback structure
                     <>
-                      {/* Score Summary Grid */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                          <div className={`text-xl font-bold ${getScoreDisplay((item.feedback as TechnicalFeedback).score).color}`}>
-                            {(item.feedback as TechnicalFeedback).score}/10
-                          </div>
-                          <div className="text-xs text-slate-400">Overall Score</div>
+                      {/* Score */}
+                      {(item.feedback as GraderFeedback).score && (
+                        <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                          <span className="text-slate-300 font-medium">Overall Score:</span>
+                          <span className={`text-xl font-bold ${getScoreDisplay(typeof (item.feedback as GraderFeedback).score === 'number' ? (item.feedback as GraderFeedback).score as number : Number((item.feedback as GraderFeedback).score) || 0).color}`}>
+                            {(item.feedback as GraderFeedback).score}/10
+                          </span>
                         </div>
-                        
-                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                          <div className="text-xl font-bold text-blue-400">
-                            {((item.feedback as TechnicalFeedback).similarity * 100).toFixed(1)}%
-                          </div>
-                          <div className="text-xs text-slate-400">Semantic Match</div>
-                        </div>
-                        
-                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                          <div className="text-xl font-bold text-green-400">
-                            {(item.feedback as TechnicalFeedback).keywordMatches.length}
-                          </div>
-                          <div className="text-xs text-slate-400">Keywords Found</div>
-                        </div>
-                        
-                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                          <div className="text-xl">
-                            {(item.feedback as TechnicalFeedback).isCorrect ? '✅' : '❌'}
-                          </div>
-                          <div className="text-xs text-slate-400">
-                            {(item.feedback as TechnicalFeedback).isCorrect ? 'Correct' : 'Needs Work'}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Detailed Technical Feedback */}
-                      <div className="space-y-4">
-                        <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                          <h5 className="text-purple-300 font-medium mb-2 flex items-center gap-2">
-                            <Brain className="w-4 h-4" />
-                            Detailed Feedback
+                      )}
+                      
+                      {/* Strengths */}
+                      {(item.feedback as GraderFeedback).strengths && (
+                        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                          <h5 className="text-green-300 font-medium mb-2 flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4" />
+                            Strengths
                           </h5>
-                          <p className="text-slate-200 text-sm leading-relaxed">
-                            {(item.feedback as TechnicalFeedback).feedback}
-                          </p>
+                          <div className="text-slate-200 text-sm leading-relaxed">
+                            {Array.isArray((item.feedback as GraderFeedback).strengths) 
+                              ? (
+                                <ul className="space-y-1">
+                                  {((item.feedback as GraderFeedback).strengths as string[]).map((strength, idx) => (
+                                    <li key={idx}>• {strength}</li>
+                                  ))}
+                                </ul>
+                              )
+                              : (item.feedback as GraderFeedback).strengths
+                            }
+                          </div>
                         </div>
+                      )}
 
-                        {(item.feedback as TechnicalFeedback).keywordMatches.length > 0 && (
-                          <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                            <h5 className="text-green-300 font-medium mb-2 flex items-center gap-2">
-                              <Star className="w-4 h-4" />
-                              Keywords You Mentioned
-                            </h5>
-                            <div className="flex flex-wrap gap-2">
-                              {(item.feedback as TechnicalFeedback).keywordMatches.map((keyword, keywordIndex) => (
-                                <span
-                                  key={keywordIndex}
-                                  className="bg-green-600 text-white px-2 py-1 rounded-full text-xs"
-                                >
-                                  {keyword}
-                                </span>
-                              ))}
-                            </div>
+                      {/* Areas for Improvement */}
+                      {((item.feedback as GraderFeedback).areasForImprovement || (item.feedback as GraderFeedback).weaknesses) && (
+                        <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                          <h5 className="text-orange-300 font-medium mb-2 flex items-center gap-2">
+                            <Target className="w-4 h-4" />
+                            Areas for Improvement
+                          </h5>
+                          <div className="text-slate-200 text-sm leading-relaxed">
+                            {(() => {
+                              const improvements = (item.feedback as GraderFeedback).areasForImprovement || (item.feedback as GraderFeedback).weaknesses;
+                              return Array.isArray(improvements) 
+                                ? (
+                                  <ul className="space-y-1">
+                                    {(improvements as string[]).map((improvement, idx) => (
+                                      <li key={idx}>• {improvement}</li>
+                                    ))}
+                                  </ul>
+                                )
+                                : improvements;
+                            })()}
                           </div>
-                        )}
-
-                        {(item.feedback as TechnicalFeedback).suggestions && (item.feedback as TechnicalFeedback).suggestions.length > 0 && (
-                          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                            <h5 className="text-blue-300 font-medium mb-2 flex items-center gap-2">
-                              <Lightbulb className="w-4 h-4" />
-                              Suggestions for Improvement
-                            </h5>
-                            <ul className="space-y-1">
-                              {(item.feedback as TechnicalFeedback).suggestions.map((suggestion, suggestionIndex) => (
-                                <li key={suggestionIndex} className="flex items-start text-slate-200 text-sm">
-                                  <span className="text-blue-400 mr-2">•</span>
-                                  <span>{suggestion}</span>
-                                </li>
-                              ))}
-                            </ul>
+                        </div>
+                      )}
+                      
+                      {/* Suggestions */}
+                      {(item.feedback as GraderFeedback).suggestions && (
+                        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                          <h5 className="text-blue-300 font-medium mb-2 flex items-center gap-2">
+                            <Lightbulb className="w-4 h-4" />
+                            Suggestions for Improvement
+                          </h5>
+                          <div className="text-slate-200 text-sm leading-relaxed">
+                            {Array.isArray((item.feedback as GraderFeedback).suggestions) 
+                              ? (
+                                <ul className="space-y-1">
+                                  {((item.feedback as GraderFeedback).suggestions as string[]).map((suggestion, idx) => (
+                                    <li key={idx}>• {suggestion}</li>
+                                  ))}
+                                </ul>
+                              )
+                              : (item.feedback as GraderFeedback).suggestions
+                            }
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -389,6 +395,135 @@ function InterviewFeedbackPage(): React.ReactElement {
             </div>
           )}
         </div>
+
+        {/* Overall Presentation Evaluation */}
+        {feedbackData && feedbackData.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            className="bg-slate-800 rounded-xl border border-slate-700 p-6"
+          >
+            {/* Presentation Header */}
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <Star className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Overall Presentation Evaluation
+                </h3>
+                <p className="text-slate-400 text-sm">
+                  Based on visual analysis of your interview performance across all questions
+                </p>
+              </div>
+            </div>
+
+            {(() => {
+              // Aggregate all presentation data from individual questions
+              const allPresentationStrengths: string[] = [];
+              const allPresentationWeaknesses: string[] = [];
+
+              feedbackData.forEach(item => {
+                if (item.presentationAnalysis) {
+                  allPresentationStrengths.push(...item.presentationAnalysis.presentationStrengths);
+                  allPresentationWeaknesses.push(...item.presentationAnalysis.presentationWeaknesses);
+                }
+              });
+
+              // Enhanced deduplication function that handles similar phrases
+              const deduplicateFeedback = (items: string[]): string[] => {
+                const unique: string[] = [];
+                const normalized: string[] = [];
+                
+                items.forEach(item => {
+                  const normalizedItem = item.toLowerCase().trim();
+                  // Check if this item (or very similar) already exists
+                  const isDuplicate = normalized.some(existing => {
+                    // Check for exact match or very similar content
+                    return existing === normalizedItem || 
+                           (existing.includes(normalizedItem.slice(0, 20)) && 
+                            normalizedItem.includes(existing.slice(0, 20)));
+                  });
+                  
+                  if (!isDuplicate) {
+                    unique.push(item);
+                    normalized.push(normalizedItem);
+                  }
+                });
+                
+                return unique;
+              };
+
+              // Remove duplicates and group similar feedback
+              const uniqueStrengths = deduplicateFeedback(allPresentationStrengths);
+              const uniqueWeaknesses = deduplicateFeedback(allPresentationWeaknesses);
+
+              return (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Presentation Strengths */}
+                  <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <h5 className="text-green-300 font-medium mb-3 flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      Presentation Strengths
+                    </h5>
+                    {uniqueStrengths.length > 0 ? (
+                      <ul className="space-y-2">
+                        {uniqueStrengths.map((strength, index) => (
+                          <li key={index} className="text-slate-200 text-sm leading-relaxed flex items-start gap-2">
+                            <span className="text-green-400 font-bold text-xs mt-1">•</span>
+                            <span>{strength}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-slate-400 text-sm italic">
+                        No presentation strengths analyzed. Ensure video was properly captured during the interview.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Presentation Areas for Improvement */}
+                  <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                    <h5 className="text-orange-300 font-medium mb-3 flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      Presentation Areas for Improvement
+                    </h5>
+                    {uniqueWeaknesses.length > 0 ? (
+                      <ul className="space-y-2">
+                        {uniqueWeaknesses.map((weakness, index) => (
+                          <li key={index} className="text-slate-200 text-sm leading-relaxed flex items-start gap-2">
+                            <span className="text-orange-400 font-bold text-xs mt-1">•</span>
+                            <span>{weakness}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-slate-400 text-sm italic">
+                        No presentation areas for improvement identified. This could indicate strong performance or missing video analysis.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Presentation Tips */}
+            <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <h5 className="text-blue-300 font-medium mb-3 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4" />
+                General Presentation Tips
+              </h5>
+              <div className="text-slate-200 text-sm leading-relaxed space-y-1">
+                <p>• Maintain consistent eye contact with the camera to simulate direct eye contact</p>
+                <p>• Show genuine enthusiasm through facial expressions and vocal variety</p>
+                <p>• Keep good posture and stable positioning throughout your answers</p>
+                <p>• Use purposeful hand gestures to emphasize key points</p>
+                <p>• Practice speaking at a measured pace with clear articulation</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Action Buttons */}
         <motion.div

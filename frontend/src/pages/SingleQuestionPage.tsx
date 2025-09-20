@@ -280,26 +280,31 @@ function SingleQuestionPage(): React.ReactElement {
           imageData = captureVideoFrame(videoRef.current) || '';
         }
         
-        const gradeResp = await behavGraderService.gradeBehavioral(
-          sampleQuestion, 
-          transcription,
-          audioBase64,
-          imageData
-        );
+        // Wait for both grading and video analysis to complete
+        const [gradeResp, videoAnalysis] = await Promise.allSettled([
+          behavGraderService.gradeBehavioral(
+            sampleQuestion, 
+            transcription,
+            audioBase64,
+            imageData
+          ),
+          videoAnalysisPromise || Promise.resolve(null)
+        ]);
+        
         console.log('Grader response:', gradeResp);
-        if (videoAnalysis.status === 'fulfilled') {
+        if (videoAnalysis.status === 'fulfilled' && videoAnalysis.value) {
           console.log('Video analysis response:', videoAnalysis.value);
-        } else {
+        } else if (videoAnalysis.status === 'rejected') {
           console.error('Video analysis failed:', videoAnalysis.reason);
         }
         
         // Combine results if both are available
-        let combinedFeedback = null;
+        let combinedFeedback: GraderFeedback | null = null;
         if (gradeResp.status === 'fulfilled') {
           combinedFeedback = gradeResp.value.feedback || null;
           
           // Add presentation analysis if available
-          if (videoAnalysis.status === 'fulfilled' && videoAnalysis.value?.analysis) {
+          if (videoAnalysis.status === 'fulfilled' && videoAnalysis.value?.analysis && combinedFeedback) {
             const analysis = videoAnalysis.value.analysis;
             combinedFeedback = {
               ...combinedFeedback,
@@ -309,7 +314,7 @@ function SingleQuestionPage(): React.ReactElement {
                 ...(combinedFeedback.suggestions || []),
                 ...(analysis.suggestions || [])
               ]
-            };
+            } as GraderFeedback;
           }
         }
         
@@ -350,29 +355,6 @@ function SingleQuestionPage(): React.ReactElement {
       console.log('🎵 Audio recording started');
     } catch (error) {
       console.error('❌ Failed to start audio recording:', error);
-    }
-  };
-
-  const stopMultiModalAnalysis = async () => {
-    if (!audioRecorder.current) {
-      console.warn('🎯 Cannot stop audio recording: missing audio recorder');
-      return;
-    }
-    
-    try {
-      console.log('🎯 Stopping audio recording...');
-      
-      // Stop audio recording
-      if (audioRecorder.current.state === 'recording') {
-        audioRecorder.current.stop();
-        console.log('🎵 Audio recording stopped');
-      }
-      
-      // Wait a bit for the final data to be available
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-    } catch (error) {
-      console.error('❌ Failed to stop audio recording:', error);
     }
   };
 
@@ -515,10 +497,10 @@ function SingleQuestionPage(): React.ReactElement {
                         </div>
 
                         {/* Presentation Strengths Section */}
-                        {graderFeedback.presentationStrengths && (
-                          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                            <h4 className="text-emerald-300 font-medium mb-2">🎯 Presentation Strengths</h4>
-                            {Array.isArray(graderFeedback.presentationStrengths) ? (
+                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                          <h4 className="text-emerald-300 font-medium mb-2">🎯 Presentation Strengths</h4>
+                          {graderFeedback.presentationStrengths ? (
+                            Array.isArray(graderFeedback.presentationStrengths) ? (
                               graderFeedback.presentationStrengths.length > 0 ? (
                                 <ul className="text-slate-200 text-sm space-y-1">
                                   {graderFeedback.presentationStrengths.map((strength, index) => (
@@ -526,17 +508,19 @@ function SingleQuestionPage(): React.ReactElement {
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-slate-400 text-sm italic">None</p>
+                                <p className="text-slate-400 text-sm italic">No presentation strengths identified</p>
                               )
                             ) : (
                               graderFeedback.presentationStrengths.trim() ? (
                                 <p className="text-slate-200 text-sm">{graderFeedback.presentationStrengths}</p>
                               ) : (
-                                <p className="text-slate-400 text-sm italic">None</p>
+                                <p className="text-slate-400 text-sm italic">No presentation strengths identified</p>
                               )
-                            )}
-                          </div>
-                        )}
+                            )
+                          ) : (
+                            <p className="text-slate-400 text-sm italic">No presentation strengths identified</p>
+                          )}
+                        </div>
 
                         {/* Presentation Weaknesses Section */}
                         {graderFeedback.presentationWeaknesses && (

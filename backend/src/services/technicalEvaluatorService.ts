@@ -373,11 +373,13 @@ Please provide 1-2 specific, actionable suggestions to improve this answer. Focu
 - Areas for more detailed explanation
 - Better structure or clarity
 
-IMPORTANT: Return ONLY a valid JSON array of strings. Do NOT wrap in markdown code blocks or add any other text.
+IMPORTANT: Frame suggestions positively and constructively. Instead of "You missed..." use "Consider adding..." or "To strengthen your answer, include..."
+
+Return ONLY a valid JSON array of strings. Do NOT wrap in markdown code blocks or add any other text.
 Each suggestion should be concise (max 50 words) and actionable.
 
 Example format:
-["Add more details about X concept", "Explain the relationship between Y and Z", "Include practical examples"]`;
+["Consider adding more details about X concept", "To strengthen your answer, explain the relationship between Y and Z", "Include practical examples to demonstrate understanding"]`;
 
       const result = await model.generateContent(prompt);
       const responseText = result.response.text().trim();

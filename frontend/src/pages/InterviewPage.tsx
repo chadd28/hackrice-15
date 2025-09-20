@@ -8,6 +8,7 @@ import { ttsService } from '../services/ttsService';
 import { sttService } from '../services/sttService';
 import { videoService } from '../services/videoService';
 import { behavGraderService } from '../services/behavGraderService';
+import { captureVideoFrame, analyzeMultiModal } from '../services/multiModalService';
 import { technicalQuestionsService } from '../services/technicalQuestionsService';
 import technicalEvaluationService from '../services/technicalEvaluationService';
 
@@ -53,6 +54,10 @@ function InterviewPage(): React.ReactElement {
     answer: string;
     feedback: any;
     questionType: 'behavioral' | 'technical';
+    presentationAnalysis?: {
+      presentationStrengths: string[];
+      presentationWeaknesses: string[];
+    };
   }>>([]);
   
   // Ref to track feedback data synchronously
@@ -62,6 +67,10 @@ function InterviewPage(): React.ReactElement {
     answer: string;
     feedback: any;
     questionType: 'behavioral' | 'technical';
+    presentationAnalysis?: {
+      presentationStrengths: string[];
+      presentationWeaknesses: string[];
+    };
   }>>([]);
   
   // Session management
@@ -541,9 +550,9 @@ function InterviewPage(): React.ReactElement {
 
     // Store feedback data - do this synchronously to ensure it's captured
     let feedbackResult = null;
+
     let questionType: 'behavioral' | 'technical' = currentQuestionIndex < 2 ? 'behavioral' : 'technical';
-    
-    // Grade the answer based on question type
+    // Grade the answer in background and log to console (don't show UI feedback)
     if (transcription && transcription.trim() && currentQuestion) {
       try {
         if (questionType === 'behavioral') {
@@ -597,13 +606,43 @@ function InterviewPage(): React.ReactElement {
       console.log('⚠️ No transcription available for grading');
     }
 
+    // Capture video frame and analyze presentation
+    let presentationAnalysisResult = null;
+    if (videoRef.current) {
+      try {
+        console.log('📷 Capturing video frame for presentation analysis...');
+        const videoFrameData = captureVideoFrame(videoRef.current);
+        
+        if (videoFrameData) {
+          console.log('🎯 Analyzing presentation with Gemini...');
+          const analysisResponse = await analyzeMultiModal({
+            imageData: `data:image/jpeg;base64,${videoFrameData}`,
+            transcriptText: transcription
+          });
+          
+          presentationAnalysisResult = {
+            presentationStrengths: analysisResponse.presentationStrengths || [],
+            presentationWeaknesses: analysisResponse.presentationWeaknesses || []
+          };
+          
+          console.log('✅ Presentation analysis completed:', presentationAnalysisResult);
+        } else {
+          console.warn('⚠️ Failed to capture video frame');
+        }
+      } catch (analysisError) {
+        console.error('❌ Presentation analysis failed:', analysisError);
+        // Still continue without presentation analysis
+      }
+    }
+
     // Store the question data with feedback (if any) - use functional update to ensure latest state
     const questionData = {
       questionIndex: currentQuestionIndex,
       question: currentQuestion?.question || '',
       answer: transcription || '',
       feedback: feedbackResult,
-      questionType
+      questionType,
+      presentationAnalysis: presentationAnalysisResult || undefined,
     };
 
     // Update both state and ref for immediate access

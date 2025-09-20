@@ -43,6 +43,14 @@ function App(): React.ReactElement {
         } 
       />
       <Route 
+        path="/practice/technical" 
+        element={
+          <ProtectedRoute>
+            <TechnicalQuestionTestPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
         path="/speech-to-text" 
         element={
           <ProtectedRoute>
@@ -62,7 +70,31 @@ function App(): React.ReactElement {
         path="/interview/session" 
         element={
           <ProtectedRoute>
-            <InterviewSessionPage />
+            <InterviewPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/interview" 
+        element={
+          <ProtectedRoute>
+            <InterviewPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/interview/feedback" 
+        element={
+          <ProtectedRoute>
+            <InterviewFeedbackPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/job-brief-tester" 
+        element={
+          <ProtectedRoute>
+            <JobBriefTester />
           </ProtectedRoute>
         } 
       />
