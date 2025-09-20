@@ -33,7 +33,9 @@ Evaluate the following behavioral interview answer.
 Question: "${question}"
 Answer: "${answer}"
 
-Provide structured feedback in JSON format:
+Provide structured feedback in JSON format with concise bullet points for each category.
+Give actionable suggestions for improvement in the suggestions field. Limit your responses to 3-5 bullet points per section.
+The JSON should have the following fields:
 {
   "strengths": "...",
   "weaknesses": "...",
