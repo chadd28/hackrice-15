@@ -263,8 +263,9 @@ function SingleQuestionPage(): React.ReactElement {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-140px)]">
+      <main className="min-h-[calc(100vh-100px)] bg-gradient-to-b from-slate-950 to-slate-900">
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[calc(100vh-140px)]">
           
           {/* Interviewer Side */}
           <motion.div
@@ -286,7 +287,7 @@ function SingleQuestionPage(): React.ReactElement {
             </div>
 
             {/* Question Display */}
-            <div className="flex-1 flex flex-col justify-center">
+            <div className="flex-1 flex flex-col">
               {!hasStarted ? (
                 <div className="bg-slate-700/50 rounded-lg p-6 mb-6">
                   <h3 className="text-lg font-medium text-white mb-4">Behavioral Question:</h3>
@@ -295,10 +296,10 @@ function SingleQuestionPage(): React.ReactElement {
                   </p>
                 </div>
               ) : hasStarted && !isPlayingIntro && !isPlayingQuestion && !isRecording && !isReadyToAnswer ? (
-                <div className="bg-slate-700/50 rounded-lg p-6 mb-6 min-h-[200px]">
+                <div className="bg-slate-700/50 rounded-lg p-6 mb-6 flex-1 overflow-hidden">
                   {graderFeedback ? (
-                    <div>
-                      <div className="flex items-center gap-3 mb-4">
+                    <div className="h-full flex flex-col">
+                      <div className="flex items-center gap-3 mb-4 flex-shrink-0">
                         <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                           <span className="text-white font-bold">AI</span>
                         </div>
@@ -308,7 +309,7 @@ function SingleQuestionPage(): React.ReactElement {
                         </div>
                       </div>
                       
-                      <div className="space-y-4">
+                      <div className="flex-1 overflow-y-auto pr-2 space-y-4">
                         <div className="flex items-center justify-between p-3 bg-slate-600/50 rounded-lg">
                           <span className="text-slate-300 font-medium">Overall Score:</span>
                           <span className="text-xl font-bold text-green-400">
@@ -444,16 +445,7 @@ function SingleQuestionPage(): React.ReactElement {
                   </button>
                 ) : hasStarted && !isPlayingIntro && !isPlayingQuestion && !isRecording && !isReadyToAnswer ? (
                   <div>
-                    {graderFeedback ? (
-                      <div className="w-full bg-purple-500/20 py-3 rounded-lg text-center border border-purple-500/30">
-                        <p className="text-purple-300 text-sm font-medium">
-                          🤖 AI Feedback Ready
-                        </p>
-                        <p className="text-purple-400 text-xs mt-1">
-                          Score: {graderFeedback.score}/10 - Check detailed feedback above
-                        </p>
-                      </div>
-                    ) : (
+                    {graderFeedback ? null : (
                       <div className="w-full bg-blue-500/20 py-3 rounded-lg text-center border border-blue-500/30">
                         <p className="text-blue-300 text-sm font-medium">
                           🤖 Analyzing Response...
@@ -551,7 +543,7 @@ function SingleQuestionPage(): React.ReactElement {
             </div>
 
             {/* Video Preview */}
-            <div className="flex-1 bg-slate-900 rounded-lg overflow-hidden relative">
+            <div className="flex-1 bg-slate-900 rounded-lg overflow-hidden relative min-h-[400px] max-h-[400px]">
               <video
                 ref={videoRef}
                 autoPlay
@@ -631,6 +623,7 @@ function SingleQuestionPage(): React.ReactElement {
               )}
             </div>
           </motion.div>
+        </div>
         </div>
       </main>
     </div>
