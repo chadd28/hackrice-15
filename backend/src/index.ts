@@ -8,6 +8,7 @@ import cors from 'cors';
 // Load routes
 import ttsRoutes from './routes/ttsRoutes';
 import authRoutes from './routes/authRoutes';
+import sttRoutes from './routes/sttRoutes';
 import interviewRoutes from './routes/interviewRoutes';
 
 const app = express();
@@ -15,11 +16,13 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Routes
 app.use('/api/tts', ttsRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/stt', sttRoutes);
 app.use('/api/interview', interviewRoutes);
 
 
