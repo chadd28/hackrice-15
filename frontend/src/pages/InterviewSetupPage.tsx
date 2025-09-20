@@ -264,8 +264,8 @@ const InterviewSetupPage: React.FC = () => {
         questions: questionsResult.questions
       });
 
-      // Navigate to dashboard
-      navigate('/dashboard');
+      // Navigate to actual interview session page
+      navigate('/interview/session');
 
     } catch (error) {
       console.error('Interview setup error:', error);
