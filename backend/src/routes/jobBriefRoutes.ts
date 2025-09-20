@@ -1,6 +1,8 @@
-import { Router } from "express";
+import { Router } from 'express';
 import { jobBrief } from '../controllers/jobBriefController';
 
 const router = Router();
-router.post("/job-brief", jobBrief);   // final endpoint: POST /api/job-brief
+
+router.post("/job-brief", jobBrief);
+
 export default router;

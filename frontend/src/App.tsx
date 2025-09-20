@@ -8,6 +8,8 @@ import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import SingleQuestionPage from './pages/SingleQuestionPage'
 import SpeechToTextPage from './pages/SpeechToTextPage'
+import JobBriefTester from './pages/JobBriefTester'
+import TechAnswerTester from './pages/TechAnswerTester'
 
 function App(): React.ReactElement {
   return (
@@ -20,6 +22,8 @@ function App(): React.ReactElement {
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/practice/single" element={<SingleQuestionPage />} />
       <Route path="/speech-to-text" element={<SpeechToTextPage />} />
+      <Route path="/jobBrief" element={<JobBriefTester />} />
+      <Route path="/tech-answer" element={<TechAnswerTester />} />
     </Routes>
   )
 }

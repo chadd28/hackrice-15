@@ -9,6 +9,7 @@ import cors from 'cors';
 import ttsRoutes from './routes/ttsRoutes';
 import authRoutes from './routes/authRoutes';
 import jobBriefRoutes from './routes/jobBriefRoutes';
+import techAnswerRoutes from './routes/techAnswerRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +22,7 @@ app.use(express.json());
 app.use('/api/tts', ttsRoutes);
 app.use('/api/auth', authRoutes);
 app.use("/api", jobBriefRoutes);
+app.use("/api", techAnswerRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
