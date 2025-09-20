@@ -31,7 +31,7 @@ export type JobBriefResponse = {
   _endpointTried?: string; // handy for debugging
 };
 
-async function postJSON(url: string, body: any, timeoutMs = 15000) {
+async function postJSON(url: string, body: any, timeoutMs = 30000) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
