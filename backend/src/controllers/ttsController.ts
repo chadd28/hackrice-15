@@ -11,7 +11,7 @@ export const testTTS = async (req: Request, res: Response) => {
 
     console.log("API Key found:", API_KEY.substring(0, 10) + "...");
 
-    const text = "Hello, we are testing Google TTS!";
+    const text = "Hello! Welcome to your interview. My name is John, and I’ll be asking you a few questions today.";
 
     console.log("Making request to Google TTS API...");
 
@@ -20,7 +20,9 @@ export const testTTS = async (req: Request, res: Response) => {
       `https://texttospeech.googleapis.com/v1/text:synthesize?key=${API_KEY}`,
       {
         input: { text },
-        voice: { languageCode: "en-US", ssmlGender: "NEUTRAL" },
+        voice: { languageCode: "en-US", 
+                  name: "en-US-Wavenet-D",    // change voice 
+                  ssmlGender: "MALE" },
         audioConfig: { audioEncoding: "MP3" },
       }
     );

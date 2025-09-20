@@ -19,7 +19,7 @@ interface FooterLinkProps {
   children: React.ReactNode;
 }
 
-function LandingPage(): React.ReactElement {
+function SampleLandingPage(): React.ReactElement {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 font-sans text-white">
       {/* Header */}
@@ -348,4 +348,4 @@ const FooterLink: React.FC<FooterLinkProps> = ({ children }) => (
   </li>
 );
 
-export default LandingPage;
+export default SampleLandingPage;
