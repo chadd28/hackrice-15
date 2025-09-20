@@ -97,7 +97,10 @@ function DashboardPage(): React.ReactElement {
             <p className="text-slate-300 text-sm mb-4">
               Practice one behavioral question at a time with instant AI feedback.
             </p>
-            <button className="w-full bg-gradient-to-r from-green-500 to-emerald-500 py-2 rounded-lg text-white font-medium hover:from-green-600 hover:to-emerald-600 transition-all duration-200">
+            <button 
+              onClick={() => window.location.href = '/practice/single'}
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 py-2 rounded-lg text-white font-medium hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
+            >
               Start Single Question
             </button>
           </div>

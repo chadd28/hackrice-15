@@ -6,6 +6,7 @@ import TestTTSPage from './pages/TestTTSPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
+import SingleQuestionPage from './pages/SingleQuestionPage'
 
 function App(): React.ReactElement {
   return (
@@ -16,6 +17,7 @@ function App(): React.ReactElement {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/practice/single" element={<SingleQuestionPage />} />
     </Routes>
   )
 }
