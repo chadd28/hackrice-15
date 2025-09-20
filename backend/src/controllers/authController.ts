@@ -108,3 +108,33 @@ export const login = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const validateToken = async (req: Request & { user?: any }, res: Response) => {
+  try {
+    // If we reach here, the authMiddleware has already validated the token
+    // and attached the user to the request
+    const user = req.user;
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    // Get user profile
+    const { data: profileData } = await supabase
+      .from('Profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    res.status(200).json({
+      message: 'Token is valid',
+      user: user,
+      profile: profileData,
+      valid: true
+    });
+
+  } catch (error) {
+    console.error('Token validation error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};

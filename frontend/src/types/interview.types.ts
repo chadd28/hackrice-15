@@ -35,6 +35,7 @@ export interface Question {
   category: 'behavioral';
   difficulty: 'easy' | 'medium' | 'hard';
   tags: string[]; // e.g., ['leadership', 'teamwork'], ['company-fit', 'motivation']
+  context?: string; // Additional context for the question
 }
 
 export interface InterviewSession {

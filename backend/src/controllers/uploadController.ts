@@ -1,7 +1,12 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import multer from 'multer';
+import multer, { MulterError } from 'multer';
+
+// Extend Request interface to include file property
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
 
 // Configure multer for file uploads
 const upload = multer({ 
@@ -279,7 +284,7 @@ async function extractPdfContent(buffer: Buffer, filename: string, type: string)
     // Use pdfjs-dist legacy build for Node.js compatibility
     let pdfjsLib;
     try {
-      pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      pdfjsLib = await import('pdfjs-dist');
       
       // Configure worker for legacy build (optional for Node.js)
       const GlobalWorkerOptions = pdfjsLib.GlobalWorkerOptions;
@@ -344,7 +349,7 @@ async function extractPdfContent(buffer: Buffer, filename: string, type: string)
         const pageText = textContent.items
           .filter((item: any) => item.str && typeof item.str === 'string')
           .map((item: any) => item.str.trim())
-          .filter(text => text.length > 0)
+          .filter((text: string) => text.length > 0)
           .join(' ');
         
         // Store individual page text for debugging
@@ -432,7 +437,7 @@ async function extractPdfContent(buffer: Buffer, filename: string, type: string)
 /**
  * Handle file upload with actual PDF text extraction
  */
-export const uploadFile = async (req: Request, res: Response) => {
+export const uploadFile = async (req: MulterRequest, res: Response) => {
   try {
     
     const { type } = req.body;

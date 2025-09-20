@@ -11,6 +11,7 @@ import authRoutes from './routes/authRoutes';
 import sttRoutes from './routes/sttRoutes';
 import interviewRoutes from './routes/interviewRoutes';
 import behavGraderRoutes from './routes/behavGraderRoutes';
+import multiModalRoutes from './routes/multiModalRoutes';
 import jobBriefRoutes from './routes/jobBriefRoutes';
 import technicalEvaluationRoutes from './routes/technicalEvaluationRoutes';
 
@@ -31,6 +32,7 @@ app.use('/api/behav-grader', behavGraderRoutes);
 app.use("/api/tavily", jobBriefRoutes);
 app.use('/api/technical', technicalEvaluationRoutes);
 
+app.use('/api/multi-modal', multiModalRoutes);
 
 
 // Basic route
