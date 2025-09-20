@@ -99,7 +99,7 @@ ${otherContent ? `**ADDITIONAL INFORMATION:**\n${otherContent}\n` : ''}
 
 **QUESTION GENERATION INSTRUCTIONS:**
 
-Generate exactly 6 technical questions and 8 behavioral questions. 
+Generate exactly 2 technical questions and 2 behavioral questions. 
 
 **FOCUS AREAS FOR RESUME ANALYSIS:**
 - PRIORITIZE: Internships, work experience, extracurricular activities, leadership roles, clubs/organizations
@@ -117,10 +117,7 @@ Generate exactly 6 technical questions and 8 behavioral questions.
 - Emphasize how they apply technical skills in collaborative environments
 
 **FOR BEHAVIORAL QUESTIONS - HEAVILY PRIORITIZE THESE:**
-- MUST include these 2 required questions:
-  1. "Tell me about a time where you faced a significant challenge. How did you overcome it?"
-  2. "Describe a situation where you had to work with a difficult team member or stakeholder. How did you handle it?"
-- **COMPANY FIT & VALUES ALIGNMENT (HIGHEST PRIORITY - Include 3-4 of these):**
+- **COMPANY FIT & VALUES ALIGNMENT:**
   * Why do you want to work at [company name] specifically?
   * How do your personal values align with our company's mission/values?
   * What attracts you most about our company culture/work environment?
@@ -128,11 +125,11 @@ Generate exactly 6 technical questions and 8 behavioral questions.
   * What are you hoping to learn or develop during your time with us?
   * How does this role fit into your long-term career goals?
   * What aspects of our company's work/mission excite you most?
-- **ROLE ALIGNMENT & SKILLSET FIT (Include 2-3 of these):**
+- **ROLE ALIGNMENT & SKILLSET FIT:**
   * How do your skills and experiences make you a good fit for this specific role?
   * What challenges mentioned in the job description are you most excited to tackle?
   * How do your past experiences prepare you for the responsibilities in this position?
-- **WORK EXPERIENCE & INTERPERSONAL SKILLS (Include 2-3 of these):**
+- **WORK EXPERIENCE & INTERPERSONAL SKILLS:**
   * Tell me about your experience at [internship/job]. What did you enjoy most about that role?
   * Describe a time when you had to learn something completely new. How did you approach it?
   * Can you share an example of how you've contributed to a team environment?
