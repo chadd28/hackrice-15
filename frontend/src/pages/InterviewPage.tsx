@@ -27,10 +27,16 @@ function InterviewPage(): React.ReactElement {
   const [isLoadingNextQuestion, setIsLoadingNextQuestion] = useState(false);
   
   // Questions and current state
-  const [questions, setQuestions] = useState<GeneratedQuestions>({ technical: [], behavioral: [] });
+  const [questions, setQuestions] = useState<GeneratedQuestions>({ behavioral: [] });
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  
+  // Session data from setup
+  const [sessionData, setSessionData] = useState<{
+    position?: string;
+    company?: string;
+  }>({});
   
   // Recording and transcription
   const [transcription, setTranscription] = useState<string>('');
@@ -75,8 +81,12 @@ function InterviewPage(): React.ReactElement {
 
     const initializeInterview = async () => {
       try {
-        // Load questions first
-        await loadQuestions();
+        // Load questions first and get session data
+        const currentSessionData = await loadQuestions();
+        
+        if (!currentSessionData) {
+          throw new Error('Failed to load session data');
+        }
 
         // Initialize camera using videoService
         const mediaStream = await videoService.initializeCamera({
@@ -113,9 +123,9 @@ function InterviewPage(): React.ReactElement {
 
         videoRecorderRef.current = videoRecorder;
 
-        // Auto-start interview after everything is loaded
+        // Auto-start interview after everything is loaded, passing session data
         setTimeout(() => {
-          handleStartInterview();
+          handleStartInterview(currentSessionData);
         }, 1000);
 
       } catch (err) {
@@ -156,9 +166,18 @@ function InterviewPage(): React.ReactElement {
       const loadedQuestions = session.questions;
       setQuestions(loadedQuestions);
       
+      // Load session data (position and company) - store in a variable for immediate use
+      const currentSessionData = {
+        position: session.position || undefined,
+        company: session.company || undefined
+      };
+      setSessionData(currentSessionData);
+      
       // Log questions for debugging
       console.group('🎯 Interview Questions Loaded');
       console.log('📋 Session ID:', interviewService.getSessionId());
+      console.log('🏢 Position:', session.position || 'Not specified');
+      console.log('🏭 Company:', session.company || 'Not specified');
       console.log('📊 Behavioral Questions Available:', loadedQuestions.behavioral.length);
       
       // We only use the first 2 behavioral questions
@@ -171,9 +190,13 @@ function InterviewPage(): React.ReactElement {
       
       setSessionStartTime(new Date());
       
+      // Return session data for immediate use
+      return currentSessionData;
+      
     } catch (err) {
       console.error('Failed to load questions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load interview questions');
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -182,12 +205,15 @@ function InterviewPage(): React.ReactElement {
   /**
    * Start the complete interview flow
    */
-  const handleStartInterview = async () => {
+  const handleStartInterview = async (currentSessionData?: { position?: string; company?: string }) => {
     // Prevent multiple calls using both state and ref guards
     if (hasStarted || isPlayingIntro || introPlayedRef.current) {
       console.log('⚠️ Interview already started or intro already playing');
       return;
     }
+
+    // Use passed session data or fall back to state
+    const dataToUse = currentSessionData || sessionData;
 
     if (videoRecorderRef.current && videoRecorderRef.current.state === 'inactive') {
       setHasStarted(true);
@@ -197,10 +223,13 @@ function InterviewPage(): React.ReactElement {
       try {
         // Generate and play introduction
         console.log('🎬 Starting interview with introduction...');
+        console.log(`🏢 Position: ${dataToUse.position || 'Not specified'}`);
+        console.log(`🏭 Company: ${dataToUse.company || 'Not specified'}`);
+
         const introResponse = await ttsService.generateIntroduction(
-          'Software Engineer', // Could come from session data
-          'Your Target Company',
-          'AI Interviewer'
+          dataToUse.position || 'the position you are applying for',
+          dataToUse.company || 'your target company',
+          'Ace AI' // ai name
         );
         
         console.log('🔊 Playing introduction audio...');
@@ -225,6 +254,8 @@ function InterviewPage(): React.ReactElement {
    */
   const playCurrentQuestion = async () => {
     console.log('🎯 Playing question', currentQuestionIndex + 1);
+    console.log('🔍 Debug - currentQuestionIndex:', currentQuestionIndex);
+    console.log('🔍 Debug - total questions available:', questions.behavioral.length);
 
     // Since backend always sends exactly 2 questions, just check if we have questions
     if (!questions.behavioral || questions.behavioral.length === 0) {
@@ -238,7 +269,16 @@ function InterviewPage(): React.ReactElement {
       return;
     }
 
+    console.log('🔍 Debug - Selected question:', {
+      index: currentQuestionIndex,
+      id: currentQuestion.id,
+      question: currentQuestion.question.substring(0, 100) + '...'
+    });
+
     try {
+      // Ensure we're in the right state
+      setIsLoadingNextQuestion(false);
+      setIsProcessing(false);
       setIsPlayingQuestion(true);
       
       console.log(`🎤 Playing question ${currentQuestionIndex + 1}: ${currentQuestion.question}`);
@@ -257,6 +297,62 @@ function InterviewPage(): React.ReactElement {
     } catch (error) {
       console.error('❌ Error playing question:', error);
       setIsPlayingQuestion(false);
+      setIsLoadingNextQuestion(false);
+      setIsProcessing(false);
+      // Note: Error fallback - could show error state or retry option
+    }
+  };
+
+  /**
+   * Play question at specific index via TTS
+   */
+  const playQuestionAtIndex = async (questionIndex: number) => {
+    console.log('🎯 Playing question at index', questionIndex + 1);
+    console.log('🔍 Debug - questionIndex:', questionIndex);
+    console.log('🔍 Debug - total questions available:', questions.behavioral.length);
+
+    // Since backend always sends exactly 2 questions, just check if we have questions
+    if (!questions.behavioral || questions.behavioral.length === 0) {
+      console.log('❌ No behavioral questions available');
+      return;
+    }
+
+    const targetQuestion = questions.behavioral[questionIndex];
+    if (!targetQuestion) {
+      console.log('❌ Target question is undefined at index:', questionIndex);
+      return;
+    }
+
+    console.log('🔍 Debug - Selected question:', {
+      index: questionIndex,
+      id: targetQuestion.id,
+      question: targetQuestion.question.substring(0, 100) + '...'
+    });
+
+    try {
+      // Ensure we're in the right state - clear any loading states
+      setIsLoadingNextQuestion(false);
+      setIsProcessing(false);
+      setIsPlayingQuestion(true);
+      
+      console.log(`🎤 Playing question ${questionIndex + 1}: ${targetQuestion.question}`);
+      const questionResponse = await ttsService.askQuestion(targetQuestion.question);
+      
+      console.log('🔊 Playing question audio...');
+      await ttsService.playAudio(questionResponse.audioContent);
+      console.log('✅ Question completed, auto-starting recording...');
+      
+      // Auto-start recording after question completes (like SingleQuestionPage)
+      setIsPlayingQuestion(false);
+      setTimeout(() => {
+        startRecording();
+      }, 500); // Small delay for smooth transition
+      
+    } catch (error) {
+      console.error('❌ Error playing question:', error);
+      setIsPlayingQuestion(false);
+      setIsLoadingNextQuestion(false);
+      setIsProcessing(false);
       // Note: Error fallback - could show error state or retry option
     }
   };
@@ -405,22 +501,23 @@ function InterviewPage(): React.ReactElement {
     console.log('📊 Current state feedback items:', feedbackData.length);
     console.log('📊 Current ref feedback items:', feedbackDataRef.current.length);
 
-    setIsProcessing(false);
-
     // Move to next question or complete interview automatically
     if (currentQuestionIndex < 1) {
       console.log(`➡️ Auto-moving to question ${currentQuestionIndex + 2}`);
+      // Don't set isProcessing to false, instead go directly to loading next question
+      setIsProcessing(false);
       setIsLoadingNextQuestion(true);
       setTimeout(() => {
         handleNextQuestion();
       }, 1500); // Give time to show loading screen
-    } else {    console.log('🎉 Interview completed!');
-    console.log('📊 Final ref feedback data length:', feedbackDataRef.current.length);
-    console.log('📊 Final state feedback data length:', feedbackData.length);
-    // Wait a moment, then complete with the ref data (which is immediately available)
-    setTimeout(() => {
-      handleCompleteInterviewWithData();
-    }, 1000); // Shorter delay since we're using ref data
+    } else {
+      console.log('🎉 Interview completed!');
+      console.log('📊 Final ref feedback data length:', feedbackDataRef.current.length);
+      console.log('📊 Final state feedback data length:', feedbackData.length);
+      // Keep processing state until we complete the interview
+      setTimeout(() => {
+        handleCompleteInterviewWithData();
+      }, 1000); // Shorter delay since we're using ref data
     }
   };
 
@@ -428,20 +525,22 @@ function InterviewPage(): React.ReactElement {
    * Move to next question
    */
   const handleNextQuestion = async () => {
-    console.log(`➡️ Moving to question ${currentQuestionIndex + 2}`);
-    setCurrentQuestionIndex(prev => prev + 1);
+    const nextIndex = currentQuestionIndex + 1;
+    console.log(`➡️ Moving to question ${nextIndex + 1}`);
+    setCurrentQuestionIndex(nextIndex);
 
     setTranscription('');
     setShowTranscription(false);
-    setIsLoadingNextQuestion(false);
     
-    // Reset states
+    // Reset states - keep isLoadingNextQuestion true to prevent showing "Ready" state
     setIsPlayingQuestion(false);
     setIsRecording(false);
+    setIsProcessing(false);
     
-    // Auto-start the next question after a small delay
+    // Auto-start the next question after a small delay, using the nextIndex directly
     setTimeout(() => {
-      playCurrentQuestion();
+      setIsLoadingNextQuestion(false); // Only set this false right before playing
+      playQuestionAtIndex(nextIndex);
     }, 500);
   };
 
