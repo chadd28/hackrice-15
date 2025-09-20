@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { analyzeInterviewPresence } from './multiModalController';
 
 dotenv.config();
 
@@ -18,7 +17,7 @@ export const gradeBehavioral = async (req: Request, res: Response) => {
       answerLength: req.body.answer?.length
     });
 
-    const { question, answer, audioContent, imageData } = req.body;
+    const { question, answer } = req.body;
 
     if (!question || !answer) {
       console.log('Missing required fields:', { question: !!question, answer: !!answer });
@@ -27,13 +26,10 @@ export const gradeBehavioral = async (req: Request, res: Response) => {
 
     console.log('API key available:', !!process.env.GEMINI_API_KEY);
     
-    // Run behavioral analysis and presentation analysis in parallel
-    const [behavioralResult, presentationResult] = await Promise.all([
-      // Existing behavioral analysis
-      (async () => {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Behavioral content analysis only
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-        const prompt = `
+    const prompt = `
 You are an interview coach analyzing CONTENT ONLY (not delivery or behavior).
 Evaluate the following behavioral interview answer for content quality.
 
