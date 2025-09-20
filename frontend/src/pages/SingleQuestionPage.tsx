@@ -544,10 +544,10 @@ function SingleQuestionPage(): React.ReactElement {
                         </div>
 
                         {/* Presentation Strengths Section */}
-                        {graderFeedback.presentationStrengths && (
-                          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                            <h4 className="text-emerald-300 font-medium mb-2">🎯 Presentation Strengths</h4>
-                            {Array.isArray(graderFeedback.presentationStrengths) ? (
+                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                          <h4 className="text-emerald-300 font-medium mb-2">🎯 Presentation Strengths</h4>
+                          {graderFeedback.presentationStrengths ? (
+                            Array.isArray(graderFeedback.presentationStrengths) ? (
                               graderFeedback.presentationStrengths.length > 0 ? (
                                 <ul className="text-slate-200 text-sm space-y-1">
                                   {graderFeedback.presentationStrengths.map((strength, index) => (
@@ -555,17 +555,19 @@ function SingleQuestionPage(): React.ReactElement {
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-slate-400 text-sm italic">None</p>
+                                <p className="text-slate-400 text-sm italic">No presentation strengths identified</p>
                               )
                             ) : (
                               graderFeedback.presentationStrengths.trim() ? (
                                 <p className="text-slate-200 text-sm">{graderFeedback.presentationStrengths}</p>
                               ) : (
-                                <p className="text-slate-400 text-sm italic">None</p>
+                                <p className="text-slate-400 text-sm italic">No presentation strengths identified</p>
                               )
-                            )}
-                          </div>
-                        )}
+                            )
+                          ) : (
+                            <p className="text-slate-400 text-sm italic">No presentation strengths identified</p>
+                          )}
+                        </div>
 
                         {/* Presentation Weaknesses Section */}
                         {graderFeedback.presentationWeaknesses && (

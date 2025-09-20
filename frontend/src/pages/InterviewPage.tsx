@@ -8,6 +8,7 @@ import { ttsService } from '../services/ttsService';
 import { sttService } from '../services/sttService';
 import { videoService } from '../services/videoService';
 import { behavGraderService } from '../services/behavGraderService';
+import { captureVideoFrame } from '../services/multiModalService';
 import { captureVideoFrame, analyzeMultiModal } from '../services/multiModalService';
 import { technicalQuestionsService } from '../services/technicalQuestionsService';
 import technicalEvaluationService from '../services/technicalEvaluationService';
@@ -550,6 +551,46 @@ function InterviewPage(): React.ReactElement {
 
     // Store feedback data - do this synchronously to ensure it's captured
     let feedbackResult = null;
+    
+    // Capture video frame for multimodal analysis
+    let videoAnalysisPromise = null;
+    if (videoRef.current) {
+      try {
+        console.log('📹 Capturing video frame for analysis...');
+        console.log('📹 Video element dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
+        console.log('📹 Video element readyState:', videoRef.current.readyState);
+        
+        const frameData = captureVideoFrame(videoRef.current);
+        if (frameData) {
+          console.log('📹 Captured frame data length:', frameData.length);
+          
+          // Send frame for multimodal analysis
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+          videoAnalysisPromise = fetch(`${backendUrl}/api/multi-modal/analyze`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageData: frameData,
+              transcriptText: transcription || ''
+            })
+          }).then(async res => {
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+            }
+            return res.json();
+          });
+          console.log('📹 Video frame sent for analysis');
+        } else {
+          console.error('❌ Failed to capture video frame - no data returned');
+        }
+      } catch (videoErr) {
+        console.error('❌ Failed to capture video frame:', videoErr);
+      }
+    } else {
+      console.error('❌ Video element not available for frame capture');
+    }
 
     let questionType: 'behavioral' | 'technical' = currentQuestionIndex < 2 ? 'behavioral' : 'technical';
     // Grade the answer in background and log to console (don't show UI feedback)
