@@ -9,8 +9,11 @@ interface FeedbackData {
   answer: string;
   feedback: {
     score?: number;
-    strengths?: string;
-    suggestions?: string;
+    strengths?: string | string[];
+    suggestions?: string | string[];
+    presentationStrengths?: string[];
+    presentationWeaknesses?: string[];
+    areasForImprovement?: string | string[];
   } | null;
 }
 
@@ -177,11 +180,82 @@ function InterviewFeedbackPage(): React.ReactElement {
                     <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                       <h5 className="text-green-300 font-medium mb-2 flex items-center gap-2">
                         <CheckCircle className="w-4 h-4" />
-                        Strengths
+                        Content Strengths
                       </h5>
-                      <p className="text-slate-200 text-sm leading-relaxed">
-                        {item.feedback.strengths}
-                      </p>
+                      <div className="text-slate-200 text-sm leading-relaxed">
+                        {Array.isArray(item.feedback.strengths) ? (
+                          item.feedback.strengths.length > 0 ? (
+                            <ul className="list-disc list-inside space-y-1">
+                              {item.feedback.strengths.map((strength, index) => (
+                                <li key={index}>{strength}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>No content strengths identified</p>
+                          )
+                        ) : (
+                          <p>{item.feedback.strengths}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Presentation Strengths */}
+                  {item.feedback.presentationStrengths !== undefined && (
+                    <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                      <h5 className="text-green-300 font-medium mb-2 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        🎯 Presentation Strengths
+                      </h5>
+                      {item.feedback.presentationStrengths.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-1 text-slate-200 text-sm">
+                          {item.feedback.presentationStrengths.map((strength, index) => (
+                            <li key={index}>{strength}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-slate-200 text-sm">No presentation strengths identified</p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Areas for Improvement */}
+                  {item.feedback.areasForImprovement && (
+                    <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                      <h5 className="text-yellow-300 font-medium mb-2 flex items-center gap-2">
+                        <Target className="w-4 h-4" />
+                        Areas for Improvement
+                      </h5>
+                      <div className="text-slate-200 text-sm leading-relaxed">
+                        {Array.isArray(item.feedback.areasForImprovement) ? (
+                          item.feedback.areasForImprovement.length > 0 ? (
+                            <ul className="list-disc list-inside space-y-1">
+                              {item.feedback.areasForImprovement.map((area, index) => (
+                                <li key={index}>{area}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>No areas for improvement identified</p>
+                          )
+                        ) : (
+                          <p>{item.feedback.areasForImprovement}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Presentation Weaknesses */}
+                  {item.feedback.presentationWeaknesses && item.feedback.presentationWeaknesses.length > 0 && (
+                    <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                      <h5 className="text-orange-300 font-medium mb-2 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        📹 Presentation Areas for Improvement
+                      </h5>
+                      <ul className="list-disc list-inside space-y-1 text-slate-200 text-sm">
+                        {item.feedback.presentationWeaknesses.map((weakness, index) => (
+                          <li key={index}>{weakness}</li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                   
@@ -192,9 +266,21 @@ function InterviewFeedbackPage(): React.ReactElement {
                         <Lightbulb className="w-4 h-4" />
                         Suggestions for Improvement
                       </h5>
-                      <p className="text-slate-200 text-sm leading-relaxed">
-                        {item.feedback.suggestions}
-                      </p>
+                      <div className="text-slate-200 text-sm leading-relaxed">
+                        {Array.isArray(item.feedback.suggestions) ? (
+                          item.feedback.suggestions.length > 0 ? (
+                            <ul className="list-disc list-inside space-y-1">
+                              {item.feedback.suggestions.map((suggestion, index) => (
+                                <li key={index}>{suggestion}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>No suggestions available</p>
+                          )
+                        ) : (
+                          <p>{item.feedback.suggestions}</p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

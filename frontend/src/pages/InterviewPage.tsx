@@ -8,6 +8,7 @@ import { ttsService } from '../services/ttsService';
 import { sttService } from '../services/sttService';
 import { videoService } from '../services/videoService';
 import { behavGraderService } from '../services/behavGraderService';
+import { captureVideoFrame } from '../services/multiModalService';
 
 /**
  * Interview Page - Manages a complete behavioral interview session
@@ -359,21 +360,92 @@ function InterviewPage(): React.ReactElement {
     // Store feedback data - do this synchronously to ensure it's captured
     let feedbackResult = null;
     
+    // Capture video frame for multimodal analysis
+    let videoAnalysisPromise = null;
+    if (videoRef.current) {
+      try {
+        console.log('📹 Capturing video frame for analysis...');
+        console.log('📹 Video element dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
+        console.log('📹 Video element readyState:', videoRef.current.readyState);
+        
+        const frameData = captureVideoFrame(videoRef.current);
+        if (frameData) {
+          console.log('📹 Captured frame data length:', frameData.length);
+          
+          // Send frame for multimodal analysis
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+          videoAnalysisPromise = fetch(`${backendUrl}/api/multi-modal/analyze`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageData: frameData,
+              transcriptText: transcription || ''
+            })
+          }).then(async res => {
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+            }
+            return res.json();
+          });
+          console.log('📹 Video frame sent for analysis');
+        } else {
+          console.error('❌ Failed to capture video frame - no data returned');
+        }
+      } catch (videoErr) {
+        console.error('❌ Failed to capture video frame:', videoErr);
+      }
+    } else {
+      console.error('❌ Video element not available for frame capture');
+    }
+    
     // Grade the answer in background and log to console (don't show UI feedback)
     if (transcription && transcription.trim() && currentQuestion) {
       try {
         console.log('📊 Sending transcript to grader...');
-        const gradeResp = await behavGraderService.gradeBehavioral(currentQuestion.question, transcription);
+        
+        // Wait for both behavioral analysis and video analysis
+        const [gradeResp, videoAnalysis] = await Promise.allSettled([
+          behavGraderService.gradeBehavioral(currentQuestion.question, transcription),
+          videoAnalysisPromise
+        ]);
+        
         console.log('✅ Grader response received:', gradeResp);
-        feedbackResult = gradeResp.feedback || null;
+        if (videoAnalysis.status === 'fulfilled') {
+          console.log('📹 Video analysis response:', videoAnalysis.value);
+        } else if (videoAnalysis.status === 'rejected') {
+          console.error('❌ Video analysis failed:', videoAnalysis.reason);
+        }
+        
+        // Combine results if both are available
+        if (gradeResp.status === 'fulfilled') {
+          feedbackResult = gradeResp.value.feedback || null;
+          
+          // Add presentation analysis if available
+          if (videoAnalysis.status === 'fulfilled' && videoAnalysis.value?.analysis) {
+            const analysis = videoAnalysis.value.analysis;
+            feedbackResult = {
+              ...feedbackResult,
+              presentationStrengths: analysis.presentationStrengths || [],
+              presentationWeaknesses: analysis.presentationWeaknesses || [],
+              suggestions: [
+                ...(feedbackResult.suggestions || []),
+                ...(analysis.suggestions || [])
+              ]
+            };
+          }
+        }
         
         // Log feedback to console but don't show in UI
         console.group(`🎯 Question ${currentQuestionIndex + 1} Feedback`);
         console.log('Question:', currentQuestion.question);
         console.log('Answer:', transcription);
-        console.log('Score:', gradeResp.feedback?.score || 'N/A');
-        console.log('Strengths:', gradeResp.feedback?.strengths || 'N/A');
-        console.log('Suggestions:', gradeResp.feedback?.suggestions || 'N/A');
+        console.log('Score:', feedbackResult?.score || 'N/A');
+        console.log('Strengths:', feedbackResult?.strengths || 'N/A');
+        console.log('Presentation Strengths:', feedbackResult?.presentationStrengths || 'N/A');
+        console.log('Presentation Weaknesses:', feedbackResult?.presentationWeaknesses || 'N/A');
+        console.log('Suggestions:', feedbackResult?.suggestions || 'N/A');
         console.groupEnd();
         
       } catch (gErr) {
