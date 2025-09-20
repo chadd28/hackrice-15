@@ -43,7 +43,6 @@ function LandingPage(): React.ReactElement {
           <div className="hidden md:flex gap-6 items-center">
             <a href="#features" className="text-slate-300 hover:text-white font-medium transition-colors">Features</a>
             <a href="#how-it-works" className="text-slate-300 hover:text-white font-medium transition-colors">How it Works</a>
-            <a href="/test-tts" className="text-slate-300 hover:text-white font-medium transition-colors">Test TTS</a>
           </div>
           <div className="flex gap-3 items-center">
             <a 

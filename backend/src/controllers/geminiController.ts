@@ -15,13 +15,12 @@ interface ProcessedContent {
 interface Question {
   id: string;
   question: string;
-  category: 'technical' | 'behavioral';
+  category: 'behavioral';
   difficulty: 'easy' | 'medium' | 'hard';
   tags: string[];
 }
 
 interface GeneratedQuestions {
-  technical: Question[];
   behavioral: Question[];
 }
 
@@ -182,7 +181,6 @@ Generating questions without asking about company fit when company information i
 **OUTPUT FORMAT:**
 Return valid JSON with this structure:
 
-
 {
   "behavioral": [
     {
@@ -231,15 +229,19 @@ Generate the interview questions now, following these rules strictly:`;
       
       questions = JSON.parse(jsonMatch[0]);
       
-      // Validate the structure
-      if (!questions.technical || !questions.behavioral || 
-          !Array.isArray(questions.technical) || !Array.isArray(questions.behavioral)) {
-        throw new Error('Invalid question structure');
+      // Ensure we have the behavioral array
+      if (!questions.behavioral) {
+        questions.behavioral = [];
+      }
+      
+      // Validate that behavioral is actually an array
+      if (!Array.isArray(questions.behavioral)) {
+        throw new Error('Invalid question structure - behavioral array expected');
       }
 
-      // Ensure we have the expected number of questions
-      if (questions.technical.length === 0 && questions.behavioral.length === 0) {
-        throw new Error('No questions generated');
+      // Ensure we have at least some behavioral questions
+      if (questions.behavioral.length === 0) {
+        throw new Error('No behavioral questions generated');
       }
 
     } catch (parseError) {
@@ -260,7 +262,7 @@ Generate the interview questions now, following these rules strictly:`;
     console.error('Question generation error:', error);
     res.status(500).json({
       success: false,
-      questions: { technical: [], behavioral: [] },
+      questions: { behavioral: [] },
       error: error instanceof Error ? error.message : 'Failed to generate questions'
     });
   }
@@ -270,51 +272,6 @@ Generate the interview questions now, following these rules strictly:`;
  * Create fallback questions if Gemini API fails
  */
 function createFallbackQuestions(resumeContent: string, jobDescContent: string): GeneratedQuestions {
-  const technical: Question[] = [
-    {
-      id: 'tech_fallback_1',
-      question: 'How do you approach learning and staying current with new technologies in your field? Can you give me an example?',
-      category: 'technical',
-      difficulty: 'easy',
-      tags: ['learning', 'technology-trends', 'professional-development']
-    },
-    {
-      id: 'tech_fallback_2',
-      question: 'Walk me through your approach to debugging a complex issue. What tools and methodologies do you use?',
-      category: 'technical',
-      difficulty: 'medium',
-      tags: ['debugging', 'problem-solving', 'tools']
-    },
-    {
-      id: 'tech_fallback_3',
-      question: 'How do you ensure code quality and maintainability when working on a team? What practices do you follow?',
-      category: 'technical',
-      difficulty: 'medium',
-      tags: ['code-quality', 'best-practices', 'teamwork']
-    },
-    {
-      id: 'tech_fallback_4',
-      question: 'Tell me about a technical decision you made that you later regretted. What did you learn from it?',
-      category: 'technical',
-      difficulty: 'medium',
-      tags: ['decision-making', 'learning', 'growth']
-    },
-    {
-      id: 'tech_fallback_5',
-      question: 'How do you approach code reviews? What do you look for when reviewing others\' code?',
-      category: 'technical',
-      difficulty: 'easy',
-      tags: ['code-review', 'collaboration', 'quality-assurance']
-    },
-    {
-      id: 'tech_fallback_6',
-      question: 'Describe your experience with testing. How do you decide what to test and what testing strategies do you employ?',
-      category: 'technical',
-      difficulty: 'medium',
-      tags: ['testing', 'quality-assurance', 'strategy']
-    }
-  ];
-
   const behavioral: Question[] = [
     {
       id: 'behav_fallback_1',
@@ -325,54 +282,12 @@ function createFallbackQuestions(resumeContent: string, jobDescContent: string):
     },
     {
       id: 'behav_fallback_2',
-      question: 'Describe a situation where you had to work with a difficult team member or stakeholder. How did you handle it?',
-      category: 'behavioral',
-      difficulty: 'medium',
-      tags: ['teamwork', 'conflict-resolution', 'communication']
-    },
-    {
-      id: 'behav_fallback_3',
       question: 'What attracts you most to this role and this company? How does it align with your career goals?',
       category: 'behavioral',
       difficulty: 'easy',
       tags: ['company-fit', 'motivation', 'career-alignment']
-    },
-    {
-      id: 'behav_fallback_4',
-      question: 'What values are most important to you in a workplace, and how do you demonstrate those values in your work?',
-      category: 'behavioral',
-      difficulty: 'medium',
-      tags: ['values', 'workplace-culture', 'personal-principles']
-    },
-    {
-      id: 'behav_fallback_5',
-      question: 'What unique perspectives and experiences can you bring to our team?',
-      category: 'behavioral',
-      difficulty: 'medium',
-      tags: ['diversity', 'unique-perspective', 'value-add']
-    },
-    {
-      id: 'behav_fallback_6',
-      question: 'What are you hoping to learn and develop during your time with our company?',
-      category: 'behavioral',
-      difficulty: 'easy',
-      tags: ['learning-goals', 'professional-development', 'growth']
-    },
-    {
-      id: 'behav_fallback_7',
-      question: 'Describe a time when you participated in a club, organization, or extracurricular activity. What role did you play and what did you learn?',
-      category: 'behavioral',
-      difficulty: 'easy',
-      tags: ['extracurricular', 'leadership', 'teamwork', 'personal-growth']
-    },
-    {
-      id: 'behav_fallback_8',
-      question: 'Tell me about an internship or work experience you\'ve had. What did you enjoy most about that role and what did you learn?',
-      category: 'behavioral',
-      difficulty: 'easy',
-      tags: ['work-experience', 'learning', 'professional-growth', 'reflection']
     }
   ];
 
-  return { technical, behavioral };
+  return { behavioral };
 }

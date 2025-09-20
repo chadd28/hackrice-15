@@ -17,7 +17,7 @@ export interface InterviewData {
 }
 
 export interface ProcessedContent {
-  type: 'resume' | 'jobDescription' | 'companyInfo' | 'otherInfo';
+  type: 'resume' | 'jobDescription' | 'companyInfo' | 'otherInfo' | 'position' | 'company';
   content: string;
   method: UploadMethod;
   filename?: string; // For file uploads
@@ -25,16 +25,15 @@ export interface ProcessedContent {
 }
 
 export interface GeneratedQuestions {
-  technical: Question[];
   behavioral: Question[];
 }
 
 export interface Question {
   id: string;
   question: string;
-  category: 'technical' | 'behavioral';
+  category: 'behavioral';
   difficulty: 'easy' | 'medium' | 'hard';
-  tags: string[]; // e.g., ['react', 'frontend'], ['leadership', 'teamwork']
+  tags: string[]; // e.g., ['leadership', 'teamwork'], ['company-fit', 'motivation']
 }
 
 export interface InterviewSession {
@@ -45,6 +44,8 @@ export interface InterviewSession {
   data: InterviewData;
   processedContent: ProcessedContent[];
   questions: GeneratedQuestions;
+  position?: string;
+  company?: string;
 }
 
 export interface UploadResponse {
