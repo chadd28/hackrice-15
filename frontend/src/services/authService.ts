@@ -79,5 +79,44 @@ export const authService = {
   getCurrentUser: () => {
     const userData = localStorage.getItem('user');
     return userData ? JSON.parse(userData) : null;
+  },
+
+  // Validate token with backend
+  validateToken: async (): Promise<boolean> => {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+
+    try {
+      const res = await fetch(`${API_URL}/validate`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!res.ok) {
+        // Token is invalid, clear localStorage
+        authService.logout();
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Token validation failed:', error);
+      authService.logout();
+      return false;
+    }
+  },
+
+  // Check if user should be redirected to home
+  checkAuthAndRedirect: async (): Promise<boolean> => {
+    const isValid = await authService.validateToken();
+    if (!isValid) {
+      // Redirect to home page
+      window.location.href = '/';
+      return false;
+    }
+    return true;
   }
 };

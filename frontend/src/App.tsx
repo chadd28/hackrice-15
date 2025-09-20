@@ -11,23 +11,60 @@ import SpeechToTextPage from './pages/SpeechToTextPage'
 import InterviewSetupPage from './pages/InterviewSetupPage'
 import InterviewPage from './pages/InterviewPage'
 import InterviewFeedbackPage from './pages/InterviewFeedbackPage'
+import ProtectedRoute from './components/ProtectedRoute'
 import JobBriefTester from './pages/JobBriefTester'
 
 function App(): React.ReactElement {
   return (
     <Routes>
+      {/* Public routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/sample-landing" element={<SampleLandingPage />} />
       <Route path="/test-tts" element={<TestTTSPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/practice/single" element={<SingleQuestionPage />} />
-      <Route path="/speech-to-text" element={<SpeechToTextPage />} />
-      <Route path="/interview/setup" element={<InterviewSetupPage />} />
-      <Route path="/interview/session" element={<InterviewPage />} />
-      <Route path="/interview/feedback" element={<InterviewFeedbackPage />} />
-      <Route path="/job-brief-tester" element={<JobBriefTester />} />
+      
+      {/* Protected routes */}
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/practice/single" 
+        element={
+          <ProtectedRoute>
+            <SingleQuestionPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/speech-to-text" 
+        element={
+          <ProtectedRoute>
+            <SpeechToTextPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/interview/setup" 
+        element={
+          <ProtectedRoute>
+            <InterviewSetupPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/interview/session" 
+        element={
+          <ProtectedRoute>
+            <InterviewSessionPage />
+          </ProtectedRoute>
+        } 
+      />
     </Routes>
   )
 }

@@ -5,6 +5,7 @@ import { ttsService } from '../services/ttsService';
 import { sttService } from '../services/sttService';
 import { videoService } from '../services/videoService';
 import { behavGraderService, type GraderFeedback } from '../services/behavGraderService';
+import { captureVideoFrame, audioToBase64 } from '../services/multiModalService';
 
 function SingleQuestionPage(): React.ReactElement {
   const [isRecording, setIsRecording] = useState(false);
@@ -17,6 +18,9 @@ function SingleQuestionPage(): React.ReactElement {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [graderFeedback, setGraderFeedback] = useState<GraderFeedback | null>(null);
   const [showTranscription, setShowTranscription] = useState(false);
+  
+  const audioChunks = useRef<Blob[]>([]);
+  const audioRecorder = useRef<MediaRecorder | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoRecorderRef = useRef<MediaRecorder | null>(null);
@@ -77,10 +81,6 @@ function SingleQuestionPage(): React.ReactElement {
       }
     };
   }, []);
-
-  // Remove the old handleTranscription function as we now use chunked transcription
-
-
 
   const handleStartAnswer = async () => {
     if (videoRecorderRef.current && videoRecorderRef.current.state === 'inactive') {
@@ -178,7 +178,12 @@ function SingleQuestionPage(): React.ReactElement {
 
         // Store the stop function
         chunkedRecordingRef.current = liveResult;
-        console.log('Live transcription setup complete');
+        console.log('🎯 Live transcription setup complete');
+        
+        // Start multi-modal analysis
+        console.log('🎯 About to start multi-modal analysis...');
+        await startMultiModalAnalysis();
+        console.log('🎯 Multi-modal analysis start completed');
       } catch (error) {
         console.error('Error setting up live transcription:', error);
         setIsRecording(false);
@@ -215,11 +220,35 @@ function SingleQuestionPage(): React.ReactElement {
       timerRef.current = null;
     }
 
+    // Stop multi-modal analysis
+    console.log('🎯 About to stop multi-modal analysis...');
+    await stopMultiModalAnalysis();
+    console.log('🎯 Multi-modal analysis stop completed');
+
     // Send transcription to grader (transcription is already available)
     if (transcription && transcription.trim()) {
       try {
         console.log('Sending transcript to grader:', transcription);
-        const gradeResp = await behavGraderService.gradeBehavioral(sampleQuestion, transcription);
+        
+        // Prepare audio and video data for multi-modal analysis
+        let audioBase64 = '';
+        let imageData = '';
+        
+        if (audioChunks.current.length > 0) {
+          const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
+          audioBase64 = await audioToBase64(audioBlob);
+        }
+        
+        if (videoRef.current) {
+          imageData = captureVideoFrame(videoRef.current) || '';
+        }
+        
+        const gradeResp = await behavGraderService.gradeBehavioral(
+          sampleQuestion, 
+          transcription,
+          audioBase64,
+          imageData
+        );
         console.log('Grader response:', gradeResp);
         setGraderFeedback(gradeResp.feedback || null);
       } catch (gErr) {
@@ -230,7 +259,59 @@ function SingleQuestionPage(): React.ReactElement {
     }
   };
 
+  // Multi-modal analysis functions
+  const startMultiModalAnalysis = async () => {
+    if (!stream || !videoRef.current) {
+      console.warn('Cannot start audio recording: missing stream or video element');
+      return;
+    }
+    
+    try {
+      console.log('🎯 Starting audio recording for analysis');
+      
+      // Setup audio recording for analysis
+      const audioStream = new MediaStream(stream.getAudioTracks());
+      audioRecorder.current = new MediaRecorder(audioStream, {
+        mimeType: 'audio/webm'
+      });
+      
+      audioChunks.current = [];
+      audioRecorder.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunks.current.push(event.data);
+          console.log('🎵 Audio chunk captured:', event.data.size, 'bytes');
+        }
+      };
+      
+      audioRecorder.current.start();
+      console.log('🎵 Audio recording started');
+    } catch (error) {
+      console.error('❌ Failed to start audio recording:', error);
+    }
+  };
 
+  const stopMultiModalAnalysis = async () => {
+    if (!audioRecorder.current) {
+      console.warn('🎯 Cannot stop audio recording: missing audio recorder');
+      return;
+    }
+    
+    try {
+      console.log('🎯 Stopping audio recording...');
+      
+      // Stop audio recording
+      if (audioRecorder.current.state === 'recording') {
+        audioRecorder.current.stop();
+        console.log('🎵 Audio recording stopped');
+      }
+      
+      // Wait a bit for the final data to be available
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+    } catch (error) {
+      console.error('❌ Failed to stop audio recording:', error);
+    }
+  };
 
   const sampleQuestion = "Tell me about a time when you had to work with a difficult team member. How did you handle the situation and what was the outcome?";
 
@@ -344,11 +425,64 @@ function SingleQuestionPage(): React.ReactElement {
                         
                         <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
                           <h4 className="text-orange-300 font-medium mb-2">⚠️ Areas for Improvement</h4>
-                          {graderFeedback.weaknesses ? (
-                            Array.isArray(graderFeedback.weaknesses) ? (
-                              graderFeedback.weaknesses.length > 0 ? (
+                          {graderFeedback.areasForImprovement || graderFeedback.weaknesses ? (
+                            (() => {
+                              const improvements = graderFeedback.areasForImprovement || graderFeedback.weaknesses;
+                              return Array.isArray(improvements) ? (
+                                improvements.length > 0 ? (
+                                  <ul className="text-slate-200 text-sm space-y-1">
+                                    {improvements.map((improvement, index) => (
+                                      <li key={index}>• {improvement}</li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-slate-400 text-sm italic">None</p>
+                                )
+                              ) : (
+                                improvements && improvements.trim() ? (
+                                  <p className="text-slate-200 text-sm">{improvements}</p>
+                                ) : (
+                                  <p className="text-slate-400 text-sm italic">None</p>
+                                )
+                              );
+                            })()
+                          ) : (
+                            <p className="text-slate-400 text-sm italic">None</p>
+                          )}
+                        </div>
+
+                        {/* Presentation Strengths Section */}
+                        {graderFeedback.presentationStrengths && (
+                          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                            <h4 className="text-emerald-300 font-medium mb-2">🎯 Presentation Strengths</h4>
+                            {Array.isArray(graderFeedback.presentationStrengths) ? (
+                              graderFeedback.presentationStrengths.length > 0 ? (
                                 <ul className="text-slate-200 text-sm space-y-1">
-                                  {graderFeedback.weaknesses.map((weakness, index) => (
+                                  {graderFeedback.presentationStrengths.map((strength, index) => (
+                                    <li key={index}>• {strength}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-slate-400 text-sm italic">None</p>
+                              )
+                            ) : (
+                              graderFeedback.presentationStrengths.trim() ? (
+                                <p className="text-slate-200 text-sm">{graderFeedback.presentationStrengths}</p>
+                              ) : (
+                                <p className="text-slate-400 text-sm italic">None</p>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                        {/* Presentation Weaknesses Section */}
+                        {graderFeedback.presentationWeaknesses && (
+                          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                            <h4 className="text-amber-300 font-medium mb-2">📹 Presentation Areas for Improvement</h4>
+                            {Array.isArray(graderFeedback.presentationWeaknesses) ? (
+                              graderFeedback.presentationWeaknesses.length > 0 ? (
+                                <ul className="text-slate-200 text-sm space-y-1">
+                                  {graderFeedback.presentationWeaknesses.map((weakness, index) => (
                                     <li key={index}>• {weakness}</li>
                                   ))}
                                 </ul>
@@ -356,16 +490,14 @@ function SingleQuestionPage(): React.ReactElement {
                                 <p className="text-slate-400 text-sm italic">None</p>
                               )
                             ) : (
-                              graderFeedback.weaknesses.trim() ? (
-                                <p className="text-slate-200 text-sm">{graderFeedback.weaknesses}</p>
+                              graderFeedback.presentationWeaknesses.trim() ? (
+                                <p className="text-slate-200 text-sm">{graderFeedback.presentationWeaknesses}</p>
                               ) : (
                                 <p className="text-slate-400 text-sm italic">None</p>
                               )
-                            )
-                          ) : (
-                            <p className="text-slate-400 text-sm italic">None</p>
-                          )}
-                        </div>
+                            )}
+                          </div>
+                        )}
                         
                         <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                           <h4 className="text-blue-300 font-medium mb-2">💡 Suggestions</h4>

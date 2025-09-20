@@ -6,6 +6,11 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { PDFExtract } from 'pdf-extract';
 
+// Extend Request interface to include file property
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
+
 // Configure multer for file uploads
 const upload = multer({
   dest: 'uploads/',
@@ -31,7 +36,7 @@ async function extractPDFText(filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const pdfExtract = new PDFExtract();
     
-    pdfExtract.extract(filePath, {}, (err, data) => {
+    pdfExtract.extract(filePath, {}, (err: any, data: any) => {
       if (err) {
         reject(new Error(`PDF extraction failed: ${err.message}`));
         return;
@@ -40,9 +45,9 @@ async function extractPDFText(filePath: string): Promise<string> {
       try {
         // Extract text from all pages
         const text = data.pages
-          .map(page => 
+          .map((page: any) => 
             page.content
-              .map(item => item.str)
+              .map((item: any) => item.str)
               .join(' ')
           )
           .join('\n\n');
@@ -152,7 +157,7 @@ async function cleanupFile(filePath: string): Promise<void> {
  */
 export const uploadFile = [
   upload.single('file'),
-  async (req: Request, res: Response) => {
+  async (req: MulterRequest, res: Response) => {
     try {
       const { type } = req.body;
       const sessionId = req.headers['x-session-id'] as string;
