@@ -1,15 +1,3 @@
-// // services/jobBriefService.ts
-// const BASE = (import.meta.env.VITE_BACKEND_URL ?? "").replace(/\/+$/, "") ||
-//              location.origin.replace(/\/+$/, "");   // falls back to same host
-
-// // One canonical endpoint
-// const ENDPOINT = `${BASE}/api/job-brief`;
-
-// const BASE =
-//   (import.meta.env.VITE_BACKEND_URL || "http://localhost:3000").replace(/\/+$/, "");
-
-// export const ENDPOINT = `${BASE}/api/job-brief`;   // <-- note the slash before api
-
 const BASE =
   (import.meta.env.VITE_BACKEND_URL ?? "").replace(/\/+$/, "") ||
   "http://localhost:3000";                 // ← built-in fallback
@@ -65,26 +53,3 @@ async function postJSON(url: string, body: any, timeoutMs = 15000) {
     clearTimeout(t);
   }
 }
-
-// export const jobBriefService = {
-//   /**
-//    * Tries multiple endpoints so your frontend works no matter which mount/route style the backend uses.
-//    */
-//   fetchBrief: async (company: string, title: string): Promise<JobBriefResponse> => {
-//     let lastErr: any = null;
-//     for (const ep of ENDPOINTS) {
-//       try {
-//         const data = await postJSON(ep, { company, title });
-//         return { ...(data as JobBriefResponse), _endpointTried: ep };
-//       } catch (e: any) {
-//         // only fall back on 404/405; otherwise bubble up (e.g., 500 key missing)
-//         if (e?.status === 404 || e?.status === 405) {
-//           lastErr = e;
-//           continue;
-//         }
-//         throw e;
-//       }
-//     }
-//     throw lastErr || new Error("All job-brief endpoints failed");
-//   },
-// };
