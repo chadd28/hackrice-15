@@ -78,6 +78,10 @@ function SpeechToTextPage(): React.ReactElement {
 
   async function sendAudioToAPI() {
     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' })
+    
+    // Log audio file size before sending
+    console.log(`Audio file size: ${audioBlob.size} bytes (${(audioBlob.size / 1024 / 1024).toFixed(2)} MB)`)
+    
     try {
       const base64Audio = await blobToBase64(audioBlob)
   const apiUrl = `https://speech.googleapis.com/v1/speech:recognize?key=${envApiKey}`
@@ -85,7 +89,7 @@ function SpeechToTextPage(): React.ReactElement {
       const requestBody = {
         config: {
           encoding: 'WEBM_OPUS',
-          sampleRateHertz: 48000,
+          sampleRateHertz: 16000, // Reduced from 48000 to 16000 for smaller file size
           languageCode: 'en-US',
         },
         audio: {
