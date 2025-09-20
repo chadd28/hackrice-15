@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Mic, ArrowLeft, Square } from 'lucide-react';
 import { ttsService } from '../services/ttsService';
+import { sttService } from '../services/sttService';
+import { videoService, type RecordingResult, type AudioResult } from '../services/videoService';
 
 function SingleQuestionPage(): React.ReactElement {
   const [isRecording, setIsRecording] = useState(false);
@@ -9,40 +11,47 @@ function SingleQuestionPage(): React.ReactElement {
   const [recordingTime, setRecordingTime] = useState(0);
   const [isPlayingIntro, setIsPlayingIntro] = useState(false);
   const [isPlayingQuestion, setIsPlayingQuestion] = useState(false);
+  const [isReadyToAnswer, setIsReadyToAnswer] = useState(false);
+  const [transcription, setTranscription] = useState<string>('');
+  const [isTranscribing, setIsTranscribing] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordingDataRef = useRef<Blob[]>([]);
+  const videoRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioRecorderRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<number | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
-  // Initialize webcam and media recorder
+  // Initialize webcam and media recorders
   useEffect(() => {
     const initWebcam = async () => {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
+        // Initialize camera using videoService
+        const mediaStream = await videoService.initializeCamera({
           video: true,
           audio: true
         });
+        
         setStream(mediaStream);
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
         }
 
-        // Initialize MediaRecorder
-        const mediaRecorder = new MediaRecorder(mediaStream);
-        mediaRecorderRef.current = mediaRecorder;
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            recordingDataRef.current.push(event.data);
+        // Create dual MediaRecorders using videoService
+        const { videoRecorder, audioRecorder } = videoService.createDualRecorders(
+          mediaStream,
+          (videoEvent, audioEvent) => {
+            // Handle data available if needed
+            console.log('Data chunks received - Video:', videoEvent.data.size, 'bytes, Audio:', audioEvent.data.size, 'bytes');
+          },
+          async (videoResult: RecordingResult, audioResult) => {
+            // Handle recording completion
+            console.log('Recording completed:', { videoResult, audioResult });
+            await handleTranscription(audioResult);
           }
-        };
+        );
 
-        mediaRecorder.onstop = () => {
-          console.log('Recording stopped, data collected');
-          recordingDataRef.current = []; // Reset for next recording
-        };
+        videoRecorderRef.current = videoRecorder;
+        audioRecorderRef.current = audioRecorder;
 
       } catch (err) {
         console.error('Error accessing webcam:', err);
@@ -54,7 +63,7 @@ function SingleQuestionPage(): React.ReactElement {
     // Cleanup function
     return () => {
       if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+        videoService.stopMediaStream(stream);
       }
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -62,8 +71,51 @@ function SingleQuestionPage(): React.ReactElement {
     };
   }, []);
 
+  const handleTranscription = async (audioResult: AudioResult) => {
+    if (!audioResult.audioBlob || audioResult.audioBlob.size === 0) {
+      console.log('No audio data to transcribe');
+      return;
+    }
+
+    try {
+      setIsTranscribing(true);
+      console.log('Starting transcription...');
+      console.log('Audio blob size:', audioResult.audioBlob.size, 'bytes');
+      
+      const base64Audio = await videoService.blobToBase64(audioResult.audioBlob);
+      console.log('Base64 audio length:', base64Audio.length);
+      
+      console.log('Sending audio for transcription...');
+      const transcriptionResult = await sttService.transcribeAudio(base64Audio, {
+        encoding: 'WEBM_OPUS',
+        sampleRateHertz: 48000,
+        languageCode: 'en-US',
+        audioChannelCount: 1,  // Mono audio for better STT results
+        enableAutomaticPunctuation: true,
+        maxAlternatives: 1,
+        profanityFilter: false
+      });
+      
+      console.log('Full transcription response:', transcriptionResult);
+      console.log('Transcription result:', transcriptionResult.transcript);
+      console.log('Confidence:', transcriptionResult.confidence);
+      console.log('Message:', transcriptionResult.message);
+      
+      setTranscription(transcriptionResult.transcript || 'No speech detected');
+      
+    } catch (error) {
+      console.error('Transcription error:', error);
+      setTranscription('Transcription failed. Please try again.');
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+
+
   const handleStartAnswer = async () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
+    if (videoRecorderRef.current && audioRecorderRef.current && 
+        videoRecorderRef.current.state === 'inactive' && audioRecorderRef.current.state === 'inactive') {
       setHasStarted(true);
       setIsPlayingIntro(true);
       
@@ -98,9 +150,29 @@ function SingleQuestionPage(): React.ReactElement {
 
       // Start recording after introduction and question
       setIsPlayingQuestion(false);
+      setIsReadyToAnswer(true);
+      startRecording();
+    }
+  };
+
+  const startRecording = () => {
+    try {
+      console.log('Starting recording...');
       setIsRecording(true);
       setRecordingTime(0);
-      mediaRecorderRef.current.start();
+      setTranscription(''); // Reset previous transcription
+      
+      // Check MediaRecorder states before starting
+      console.log('Video recorder state:', videoRecorderRef.current?.state);
+      console.log('Audio recorder state:', audioRecorderRef.current?.state);
+      
+      // Start both video and audio recording
+      if (videoRecorderRef.current && videoRecorderRef.current.state === 'inactive' &&
+          audioRecorderRef.current && audioRecorderRef.current.state === 'inactive') {
+        videoRecorderRef.current.start();
+        audioRecorderRef.current.start();
+        console.log('Started both video and audio recording');
+      }
       
       // Start timer
       timerRef.current = window.setInterval(() => {
@@ -114,14 +186,22 @@ function SingleQuestionPage(): React.ReactElement {
         });
       }, 1000);
       
-      console.log('Started recording');
+      console.log('Recording started successfully');
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      setIsRecording(false);
+      setIsReadyToAnswer(false);
     }
   };
 
   const handleStopAnswer = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+    if (videoRecorderRef.current && videoRecorderRef.current.state === 'recording' &&
+        audioRecorderRef.current && audioRecorderRef.current.state === 'recording') {
       setIsRecording(false);
-      mediaRecorderRef.current.stop();
+      setIsReadyToAnswer(false);
+      
+      videoRecorderRef.current.stop();
+      audioRecorderRef.current.stop();
       
       // Stop timer
       if (timerRef.current) {
@@ -129,16 +209,11 @@ function SingleQuestionPage(): React.ReactElement {
         timerRef.current = null;
       }
       
-      console.log('Stopped recording');
+      console.log('Stopped both video and audio recording');
     }
   };
 
-  // Format timer display
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+
 
   const sampleQuestion = "Tell me about a time when you had to work with a difficult team member. How did you handle the situation and what was the outcome?";
 
@@ -195,12 +270,27 @@ function SingleQuestionPage(): React.ReactElement {
 
             {/* Question Display */}
             <div className="flex-1 flex flex-col justify-center">
-              {!hasStarted || (!isPlayingIntro && !isPlayingQuestion && !isRecording) ? (
+              {!hasStarted ? (
                 <div className="bg-slate-700/50 rounded-lg p-6 mb-6">
                   <h3 className="text-lg font-medium text-white mb-4">Behavioral Question:</h3>
                   <p className="text-slate-200 leading-relaxed text-lg">
                     {sampleQuestion}
                   </p>
+                </div>
+              ) : hasStarted && !isPlayingIntro && !isPlayingQuestion && !isRecording && !isReadyToAnswer ? (
+                <div className="bg-slate-700/50 rounded-lg p-6 mb-6 flex flex-col items-center justify-center min-h-[200px]">
+                  <div className="w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mb-4">
+                    <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                        <span className="text-green-600 font-bold">✓</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-green-300 text-lg mb-2">🎉 Recording Completed!</p>
+                    <p className="text-slate-400 text-sm">Your response has been recorded and is being transcribed.</p>
+                    <p className="text-slate-400 text-sm mt-1">Check the transcription on the right side.</p>
+                  </div>
                 </div>
               ) : (
                 <div className="bg-slate-700/50 rounded-lg p-6 mb-6 flex flex-col items-center justify-center min-h-[200px]">
@@ -218,7 +308,7 @@ function SingleQuestionPage(): React.ReactElement {
                     {isPlayingQuestion && (
                       <p className="text-purple-300 text-lg">🎤 Asking question...</p>
                     )}
-                    {isRecording && (
+                    {isReadyToAnswer && (
                       <p className="text-green-300 text-lg">Your turn to answer!</p>
                     )}
                   </div>
@@ -235,6 +325,17 @@ function SingleQuestionPage(): React.ReactElement {
                     <Mic className="w-5 h-5" />
                     Start Question
                   </button>
+                ) : hasStarted && !isPlayingIntro && !isPlayingQuestion && !isRecording && !isReadyToAnswer ? (
+                  <div>
+                    <div className="w-full bg-green-500/20 py-3 rounded-lg text-center border border-green-500/30">
+                      <p className="text-green-300 text-sm font-medium">
+                        ✅ Interview Session Complete
+                      </p>
+                      <p className="text-green-400 text-xs mt-1">
+                        Your response has been recorded and transcribed
+                      </p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {isPlayingIntro ? (
@@ -262,7 +363,7 @@ function SingleQuestionPage(): React.ReactElement {
                         </p>
                         {isRecording && (
                           <p className="text-slate-400 text-xs mt-1">
-                            Time remaining: {formatTime(180 - recordingTime)}
+                            Time remaining: {videoService.formatTime(180 - recordingTime)}
                           </p>
                         )}
                       </div>
@@ -344,7 +445,7 @@ function SingleQuestionPage(): React.ReactElement {
               {/* Recording timer */}
               {isRecording && (
                 <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-mono">
-                  {formatTime(recordingTime)}
+                  {videoService.formatTime(recordingTime)}
                 </div>
               )}
             </div>
@@ -362,11 +463,33 @@ function SingleQuestionPage(): React.ReactElement {
                 </span>
               </div>
               
-              {hasStarted && !isRecording && (
+              {/* Transcription Section */}
+              {(hasStarted && !isRecording) && (
                 <div className="mt-3">
-                  <button className="w-full bg-green-600 hover:bg-green-700 py-2 rounded text-white text-sm transition-colors">
-                    Get AI Feedback
-                  </button>
+                  <div className="border-t border-slate-600 pt-3">
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="text-slate-300">Your Response:</span>
+                      {isTranscribing && (
+                        <span className="text-blue-400 text-xs">Transcribing...</span>
+                      )}
+                    </div>
+                    <div className="bg-slate-800/50 rounded-lg p-3 min-h-[60px]">
+                      {isTranscribing ? (
+                        <div className="flex items-center gap-2 text-slate-400 text-sm">
+                          <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                          Processing your response...
+                        </div>
+                      ) : transcription ? (
+                        <p className="text-slate-200 text-sm leading-relaxed">
+                          "{transcription}"
+                        </p>
+                      ) : (
+                        <p className="text-slate-500 text-sm italic">
+                          Your transcribed response will appear here
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

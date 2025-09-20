@@ -93,7 +93,10 @@ export const generateIntroduction = async (req: Request, res: Response) => {
           name: "en-US-Wavenet-D",
           ssmlGender: "MALE" 
         },
-        audioConfig: { audioEncoding: "MP3" },
+        audioConfig: { 
+            audioEncoding: "MP3",
+            speakingRate: 1, // 1.0 is normal
+        },
       }
     );
 
@@ -159,7 +162,10 @@ export const askQuestion = async (req: Request, res: Response) => {
           name: "en-US-Wavenet-D",
           ssmlGender: "MALE" 
         },
-        audioConfig: { audioEncoding: "MP3" },
+        audioConfig: { 
+            audioEncoding: "MP3",
+            speakingRate: 1, // 1.0 is normal
+         },
       }
     );
 
