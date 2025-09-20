@@ -43,44 +43,46 @@ export const analyzeInterviewPresence = async (
       const genAI = new GoogleGenerativeAI(geminiApiKey);
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-      const prompt = `Analyze this interview video frame for presentation skills. Focus ONLY on observable visual behavior, no personality inferences.
+      const prompt = `Analyze this interview video frame for presentation skills. Focus HEAVILY on eye contact and visible enthusiasm. Only observable visual behavior, no personality inferences.
 
-CRITERIA TO ASSESS:
+PRIORITY CRITERIA (Focus heavily on these):
 
-1. Eye Contact / Gaze:
-- Is face present and visible?
-- Is gaze directed toward camera (within reasonable range)?
-- Face positioning relative to center?
+1. Eye Contact / Gaze (HIGH PRIORITY):
+- Is the person looking directly at camera vs looking away?
+- Face positioning - centered and engaged with viewer?
+- Direct gaze vs distracted/avoidant eye contact?
+- Professional eye engagement level?
 
-2. Passion / Enthusiasm (Visible):
-- Observable smiles or positive expressions?
-- Expression intensity and variation?
-- Head/hand movement that suggests engagement?
+2. Passion / Enthusiasm - Visible (HIGH PRIORITY):
+- Observable genuine smiles and positive expressions?
+- Facial animation and expression variety?
+- Eyes showing engagement vs flat/disinterested?
+- Observable energy and enthusiasm through face?
+- Expression intensity that shows interest?
+
+SECONDARY CRITERIA:
 
 3. Professional Yet Approachable Expression:
-- Neutral/attentive baseline maintained?
-- Appropriate periodic warm expressions?
-- Avoiding overly exaggerated faces?
+- Maintains professional baseline with appropriate warmth?
+- Balanced serious yet friendly demeanor?
+- Avoiding overly exaggerated or inappropriate expressions?
 
 4. Posture / Stability:
-- Upright head and shoulders?
-- Minimal forward slouch or backward lean?
-- Stable positioning without excessive sway?
+- Upright, confident posture vs slouched appearance?
+- Stable positioning without excessive movement?
+- Professional physical presence?
 
 5. Head Pose & Movement:
-- Head positioning and orientation?
-- Natural vs excessive head movement?
-- Any distracting head gestures?
+- Natural head positioning vs excessive movement?
+- Composed vs restless head gestures?
 
-6. Gestures (Hands):
-- Are hands visible in frame?
-- Purposeful gestures vs excessive movement?
-- Appropriate gesture usage?
+6. Gestures (Hands) - OPTIONAL:
+- If hands visible: purposeful vs excessive gesturing?
+- Note: Having no visible hands/gestures is perfectly fine and not a weakness
 
 7. Fidgeting / Self-Touch:
-- Any hair/face touching visible?
-- Object manipulation or fidgeting?
-- Overall composed appearance?
+- Observable nervous touching or fidgeting?
+- Composed vs restless physical behavior?
 
 Return ONLY a JSON object with exactly this format:
 {
@@ -88,7 +90,7 @@ Return ONLY a JSON object with exactly this format:
   "presentationWeaknesses": ["weakness 1", "weakness 2"]
 }
 
-Focus on DESCRIPTIVE observations only, no numbers or statistics. Only include actual observable behaviors.`;
+IMPORTANT: Focus descriptions on EYE CONTACT and VISIBLE ENTHUSIASM first. Only include actual observable behaviors. No numbers or statistics.`;
 
       const cleanImageData = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
       
