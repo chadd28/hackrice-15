@@ -2,9 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Mic, ArrowLeft, Square } from 'lucide-react';
 import { ttsService } from '../services/ttsService';
-import { sttService } from '../services/sttService';
-import { videoService } from '../services/videoService';
-import { behavGraderService, type GraderFeedback } from '../services/behavGraderService';
 
 function SingleQuestionPage(): React.ReactElement {
   const [isRecording, setIsRecording] = useState(false);
@@ -12,50 +9,40 @@ function SingleQuestionPage(): React.ReactElement {
   const [recordingTime, setRecordingTime] = useState(0);
   const [isPlayingIntro, setIsPlayingIntro] = useState(false);
   const [isPlayingQuestion, setIsPlayingQuestion] = useState(false);
-  const [isReadyToAnswer, setIsReadyToAnswer] = useState(false);
-  const [transcription, setTranscription] = useState<string>('');
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [graderFeedback, setGraderFeedback] = useState<GraderFeedback | null>(null);
-  const [showTranscription, setShowTranscription] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  const videoRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingDataRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
-  const chunkedRecordingRef = useRef<{ stopRecording: () => void } | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
-  // Initialize webcam and video recorder
+  // Initialize webcam and media recorder
   useEffect(() => {
     const initWebcam = async () => {
       try {
-        // Initialize camera using videoService
-        const mediaStream = await videoService.initializeCamera({
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true
         });
-        
         setStream(mediaStream);
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
         }
 
-        // Create video-only recorder for visual recording
-        const videoStream = new MediaStream(mediaStream.getVideoTracks());
-        const videoRecorder = new MediaRecorder(videoStream, {
-          mimeType: 'video/webm;codecs=vp9'
-        });
+        // Initialize MediaRecorder
+        const mediaRecorder = new MediaRecorder(mediaStream);
+        mediaRecorderRef.current = mediaRecorder;
 
-        videoRecorder.ondataavailable = (event) => {
+        mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
-            console.log('Video chunk recorded:', event.data.size, 'bytes');
+            recordingDataRef.current.push(event.data);
           }
         };
 
-        videoRecorder.onstop = () => {
-          console.log('Video recording stopped');
+        mediaRecorder.onstop = () => {
+          console.log('Recording stopped, data collected');
+          recordingDataRef.current = []; // Reset for next recording
         };
-
-        videoRecorderRef.current = videoRecorder;
 
       } catch (err) {
         console.error('Error accessing webcam:', err);
@@ -67,23 +54,16 @@ function SingleQuestionPage(): React.ReactElement {
     // Cleanup function
     return () => {
       if (stream) {
-        videoService.stopMediaStream(stream);
+        stream.getTracks().forEach(track => track.stop());
       }
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
-      if (chunkedRecordingRef.current) {
-        chunkedRecordingRef.current.stopRecording();
-      }
     };
   }, []);
 
-  // Remove the old handleTranscription function as we now use chunked transcription
-
-
-
   const handleStartAnswer = async () => {
-    if (videoRecorderRef.current && videoRecorderRef.current.state === 'inactive') {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
       setHasStarted(true);
       setIsPlayingIntro(true);
       
@@ -118,29 +98,11 @@ function SingleQuestionPage(): React.ReactElement {
 
       // Start recording after introduction and question
       setIsPlayingQuestion(false);
-      setIsReadyToAnswer(true);
-      startRecording();
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      console.log('Starting recording...');
       setIsRecording(true);
       setRecordingTime(0);
-      setTranscription(''); // Reset previous transcription
-      setShowTranscription(false); // Hide transcription during recording
+      mediaRecorderRef.current.start();
       
-      // Check MediaRecorder state before starting
-      console.log('Video recorder state:', videoRecorderRef.current?.state);
-      
-      // Start video recording
-      if (videoRecorderRef.current && videoRecorderRef.current.state === 'inactive') {
-        videoRecorderRef.current.start();
-        console.log('Started video recording');
-      }
-
-      // Start timer immediately
+      // Start timer
       timerRef.current = window.setInterval(() => {
         setRecordingTime(prev => {
           const newTime = prev + 1;
@@ -151,86 +113,32 @@ function SingleQuestionPage(): React.ReactElement {
           return newTime;
         });
       }, 1000);
+      
+      console.log('Started recording');
+    }
+  };
 
-      // Start live audio transcription
-      try {
-        const liveResult = await sttService.recordAndTranscribeLive(
-          (message, type) => {
-            // Only log important status changes, not every update
-            if (type === 'error' || type === 'info') {
-              console.log(`Live transcription status: ${message} (${type})`);
-            }
-            setIsTranscribing(type === 'loading');
-          },
-          (transcript, isFinal) => {
-            // Only log final transcripts to reduce console spam
-            if (isFinal) {
-              console.log(`Final transcript:`, transcript);
-            }
-            // Show live transcription as it happens
-            setTranscription(transcript);
-            setShowTranscription(true);
-          },
-          {
-            languageCode: 'en-US',
-          }
-        );
-
-        // Store the stop function
-        chunkedRecordingRef.current = liveResult;
-        console.log('Live transcription setup complete');
-      } catch (error) {
-        console.error('Error setting up live transcription:', error);
-        setIsRecording(false);
-        setIsReadyToAnswer(false);
+  const handleStopAnswer = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      setIsRecording(false);
+      mediaRecorderRef.current.stop();
+      
+      // Stop timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
       
-      console.log('Recording started successfully');
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      setIsRecording(false);
-      setIsReadyToAnswer(false);
+      console.log('Stopped recording');
     }
   };
 
-  const handleStopAnswer = async () => {
-    setIsRecording(false);
-    setIsReadyToAnswer(false);
-    
-    // Stop video recording
-    if (videoRecorderRef.current && videoRecorderRef.current.state === 'recording') {
-      videoRecorderRef.current.stop();
-      console.log('Stopped video recording');
-    }
-    
-    // Stop live transcription
-    if (chunkedRecordingRef.current) {
-      chunkedRecordingRef.current.stopRecording();
-      console.log('Stopped live transcription');
-    }
-    
-    // Stop timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    // Send transcription to grader (transcription is already available)
-    if (transcription && transcription.trim()) {
-      try {
-        console.log('Sending transcript to grader:', transcription);
-        const gradeResp = await behavGraderService.gradeBehavioral(sampleQuestion, transcription);
-        console.log('Grader response:', gradeResp);
-        setGraderFeedback(gradeResp.feedback || null);
-      } catch (gErr) {
-        console.error('Behavioral grading failed:', gErr);
-      }
-    } else {
-      console.log('No transcription available for grading');
-    }
+  // Format timer display
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-
-
 
   const sampleQuestion = "Tell me about a time when you had to work with a difficult team member. How did you handle the situation and what was the outcome?";
 
@@ -263,9 +171,8 @@ function SingleQuestionPage(): React.ReactElement {
       </header>
 
       {/* Main Content */}
-      <main className="min-h-[calc(100vh-100px)] bg-gradient-to-b from-slate-950 to-slate-900">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[calc(100vh-140px)]">
+      <main className="max-w-7xl mx-auto p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-140px)]">
           
           {/* Interviewer Side */}
           <motion.div
@@ -287,128 +194,13 @@ function SingleQuestionPage(): React.ReactElement {
             </div>
 
             {/* Question Display */}
-            <div className="flex-1 flex flex-col">
-              {!hasStarted ? (
+            <div className="flex-1 flex flex-col justify-center">
+              {!hasStarted || (!isPlayingIntro && !isPlayingQuestion && !isRecording) ? (
                 <div className="bg-slate-700/50 rounded-lg p-6 mb-6">
                   <h3 className="text-lg font-medium text-white mb-4">Behavioral Question:</h3>
                   <p className="text-slate-200 leading-relaxed text-lg">
                     {sampleQuestion}
                   </p>
-                </div>
-              ) : hasStarted && !isPlayingIntro && !isPlayingQuestion && !isRecording && !isReadyToAnswer ? (
-                <div className="bg-slate-700/50 rounded-lg p-6 mb-6 flex-1 overflow-hidden">
-                  {graderFeedback ? (
-                    <div className="h-full flex flex-col">
-                      <div className="flex items-center gap-3 mb-4 flex-shrink-0">
-                        <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold">AI</span>
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">Interview Feedback</h3>
-                          <p className="text-slate-400 text-sm">Analysis of your response</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-slate-600/50 rounded-lg">
-                          <span className="text-slate-300 font-medium">Overall Score:</span>
-                          <span className="text-xl font-bold text-green-400">
-                            {graderFeedback.score ? `${graderFeedback.score}/10` : 'None'}
-                          </span>
-                        </div>
-                        
-                        <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                          <h4 className="text-green-300 font-medium mb-2">✅ Strengths</h4>
-                          {graderFeedback.strengths ? (
-                            Array.isArray(graderFeedback.strengths) ? (
-                              graderFeedback.strengths.length > 0 ? (
-                                <ul className="text-slate-200 text-sm space-y-1">
-                                  {graderFeedback.strengths.map((strength, index) => (
-                                    <li key={index}>• {strength}</li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-slate-400 text-sm italic">None</p>
-                              )
-                            ) : (
-                              graderFeedback.strengths.trim() ? (
-                                <p className="text-slate-200 text-sm">{graderFeedback.strengths}</p>
-                              ) : (
-                                <p className="text-slate-400 text-sm italic">None</p>
-                              )
-                            )
-                          ) : (
-                            <p className="text-slate-400 text-sm italic">None</p>
-                          )}
-                        </div>
-                        
-                        <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
-                          <h4 className="text-orange-300 font-medium mb-2">⚠️ Areas for Improvement</h4>
-                          {graderFeedback.weaknesses ? (
-                            Array.isArray(graderFeedback.weaknesses) ? (
-                              graderFeedback.weaknesses.length > 0 ? (
-                                <ul className="text-slate-200 text-sm space-y-1">
-                                  {graderFeedback.weaknesses.map((weakness, index) => (
-                                    <li key={index}>• {weakness}</li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-slate-400 text-sm italic">None</p>
-                              )
-                            ) : (
-                              graderFeedback.weaknesses.trim() ? (
-                                <p className="text-slate-200 text-sm">{graderFeedback.weaknesses}</p>
-                              ) : (
-                                <p className="text-slate-400 text-sm italic">None</p>
-                              )
-                            )
-                          ) : (
-                            <p className="text-slate-400 text-sm italic">None</p>
-                          )}
-                        </div>
-                        
-                        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                          <h4 className="text-blue-300 font-medium mb-2">💡 Suggestions</h4>
-                          {graderFeedback.suggestions ? (
-                            Array.isArray(graderFeedback.suggestions) ? (
-                              graderFeedback.suggestions.length > 0 ? (
-                                <ul className="text-slate-200 text-sm space-y-1">
-                                  {graderFeedback.suggestions.map((suggestion, index) => (
-                                    <li key={index}>• {suggestion}</li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-slate-400 text-sm italic">None</p>
-                              )
-                            ) : (
-                              graderFeedback.suggestions.trim() ? (
-                                <p className="text-slate-200 text-sm">{graderFeedback.suggestions}</p>
-                              ) : (
-                                <p className="text-slate-400 text-sm italic">None</p>
-                              )
-                            )
-                          ) : (
-                            <p className="text-slate-400 text-sm italic">None</p>
-                          )}
-                        </div>
-                        
-                        {graderFeedback.raw && !graderFeedback.strengths && (
-                          <div className="p-3 bg-slate-600/50 rounded-lg">
-                            <h4 className="text-slate-300 font-medium mb-2">📝 AI Feedback</h4>
-                            <p className="text-slate-200 text-sm whitespace-pre-wrap">
-                              {graderFeedback.raw.trim() || 'None'}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full">
-                      <div className="w-16 h-16 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-                      <p className="text-purple-300 text-lg mb-2">🤖 AI is analyzing your response...</p>
-                      <p className="text-slate-400 text-sm text-center">This may take a few moments</p>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="bg-slate-700/50 rounded-lg p-6 mb-6 flex flex-col items-center justify-center min-h-[200px]">
@@ -426,7 +218,7 @@ function SingleQuestionPage(): React.ReactElement {
                     {isPlayingQuestion && (
                       <p className="text-purple-300 text-lg">🎤 Asking question...</p>
                     )}
-                    {isReadyToAnswer && (
+                    {isRecording && (
                       <p className="text-green-300 text-lg">Your turn to answer!</p>
                     )}
                   </div>
@@ -443,19 +235,6 @@ function SingleQuestionPage(): React.ReactElement {
                     <Mic className="w-5 h-5" />
                     Start Question
                   </button>
-                ) : hasStarted && !isPlayingIntro && !isPlayingQuestion && !isRecording && !isReadyToAnswer ? (
-                  <div>
-                    {graderFeedback ? null : (
-                      <div className="w-full bg-blue-500/20 py-3 rounded-lg text-center border border-blue-500/30">
-                        <p className="text-blue-300 text-sm font-medium">
-                          🤖 Analyzing Response...
-                        </p>
-                        <p className="text-blue-400 text-xs mt-1">
-                          AI is reviewing your answer and preparing feedback
-                        </p>
-                      </div>
-                    )}
-                  </div>
                 ) : (
                   <div className="space-y-3">
                     {isPlayingIntro ? (
@@ -483,7 +262,7 @@ function SingleQuestionPage(): React.ReactElement {
                         </p>
                         {isRecording && (
                           <p className="text-slate-400 text-xs mt-1">
-                            Time remaining: {videoService.formatTime(180 - recordingTime)}
+                            Time remaining: {formatTime(180 - recordingTime)}
                           </p>
                         )}
                       </div>
@@ -543,7 +322,7 @@ function SingleQuestionPage(): React.ReactElement {
             </div>
 
             {/* Video Preview */}
-            <div className="flex-1 bg-slate-900 rounded-lg overflow-hidden relative min-h-[400px] max-h-[400px]">
+            <div className="flex-1 bg-slate-900 rounded-lg overflow-hidden relative">
               <video
                 ref={videoRef}
                 autoPlay
@@ -565,7 +344,7 @@ function SingleQuestionPage(): React.ReactElement {
               {/* Recording timer */}
               {isRecording && (
                 <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-mono">
-                  {videoService.formatTime(recordingTime)}
+                  {formatTime(recordingTime)}
                 </div>
               )}
             </div>
@@ -583,47 +362,15 @@ function SingleQuestionPage(): React.ReactElement {
                 </span>
               </div>
               
-              {/* Transcription Section - Show during and after recording */}
-              {hasStarted && (
+              {hasStarted && !isRecording && (
                 <div className="mt-3">
-                  <div className="border-t border-slate-600 pt-3">
-                    <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-slate-300">
-                        {isRecording ? 'Audio Recording:' : 'Your Response:'}
-                      </span>
-                      {isTranscribing && (
-                        <span className="text-blue-400 text-xs">
-                          {isRecording ? 'Recording audio with live transcription...' : 'Processing final transcript...'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="bg-slate-800/50 rounded-lg p-3 min-h-[60px] max-h-[200px] overflow-y-auto">
-                      {isRecording ? (
-                        <div className="flex items-center gap-2 text-slate-400 text-sm">
-                          <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
-                          Recording audio... (Transcription will appear when finished)
-                        </div>
-                      ) : isTranscribing && !showTranscription ? (
-                        <div className="flex items-center gap-2 text-slate-400 text-sm">
-                          <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                          Processing your response...
-                        </div>
-                      ) : showTranscription && transcription ? (
-                        <div className="text-slate-200 text-sm leading-relaxed">
-                          <p>"{transcription}"</p>
-                        </div>
-                      ) : (
-                        <p className="text-slate-500 text-sm italic">
-                          {hasStarted ? 'Your transcribed response will appear here after recording' : 'Start recording to capture your response'}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  <button className="w-full bg-green-600 hover:bg-green-700 py-2 rounded text-white text-sm transition-colors">
+                    Get AI Feedback
+                  </button>
                 </div>
               )}
             </div>
           </motion.div>
-        </div>
         </div>
       </main>
     </div>

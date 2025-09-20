@@ -1,44 +1,12 @@
 const API_URL = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/tts`;
 
-/**
- * Response interface for TTS API calls
- */
 interface TTSResponse {
   message: string;
   audioContent: string;
   introText?: string;
 }
 
-/**
- * Text-to-Speech Service
- * 
- * This service handles all text-to-speech functionality by calling backend endpoints
- * that interface with Google's Text-to-Speech API. The backend keeps API keys secure
- * and provides a clean interface for audio generation.
- */
 export const ttsService = {
-  /**
-   * Generate Introduction Audio
-   * 
-   * Creates a personalized interview introduction with the interviewer's details.
-   * This is typically used at the start of an interview session.
-   * 
-   * @param position - The job position being interviewed for (e.g., "Software Engineer")
-   * @param company - The company name (e.g., "Google")
-   * @param interviewerName - The interviewer's name (e.g., "John Doe")
-   * @returns Promise<TTSResponse> - Contains base64 audio content and introduction text
-   * 
-   * @example
-   * ```typescript
-   * const intro = await ttsService.generateIntroduction(
-   *   "Software Engineer", 
-   *   "Google", 
-   *   "Sarah Wilson"
-   * );
-   * console.log(intro.introText); // Generated introduction text
-   * await ttsService.playAudio(intro.audioContent); // Play the audio
-   * ```
-   */
   generateIntroduction: async (position: string, company: string, interviewerName: string): Promise<TTSResponse> => {
     const res = await fetch(`${API_URL}/introduction`, {
       method: 'POST',
@@ -55,25 +23,6 @@ export const ttsService = {
     return data;
   },
 
-  /**
-   * Test TTS Configuration
-   * 
-   * Verifies that the backend TTS service is properly configured and accessible.
-   * Useful for debugging connection issues or API key problems.
-   * 
-   * @returns Promise<TTSResponse> - Contains test audio content with a sample message
-   * 
-   * @example
-   * ```typescript
-   * try {
-   *   const test = await ttsService.testTTS();
-   *   console.log("TTS service is working:", test.message);
-   *   await ttsService.playAudio(test.audioContent);
-   * } catch (error) {
-   *   console.error("TTS service error:", error.message);
-   * }
-   * ```
-   */
   testTTS: async (): Promise<TTSResponse> => {
     const res = await fetch(`${API_URL}/test`, {
       method: 'GET',
