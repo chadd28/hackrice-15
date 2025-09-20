@@ -65,14 +65,20 @@ async function extractPDFText(filePath: string): Promise<string> {
  */
 async function extractUrlContent(url: string): Promise<string> {
   try {
+    // Normalize URL - add https:// if no protocol is provided
+    let normalizedUrl = url.trim();
+    if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+      normalizedUrl = 'https://' + normalizedUrl;
+    }
+    
     // Validate URL
-    const parsedUrl = new URL(url);
+    const parsedUrl = new URL(normalizedUrl);
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       throw new Error('Only HTTP and HTTPS URLs are supported');
     }
 
     // Fetch the webpage
-    const response = await axios.get(url, {
+    const response = await axios.get(normalizedUrl, {
       timeout: 10000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; InterviewBot/1.0)',
@@ -233,11 +239,11 @@ export const uploadText = async (req: Request, res: Response) => {
       });
     }
 
-    if (text.length > 50000) {
+    if (text.length > 10000) {
       return res.status(400).json({
         success: false,
         message: 'Text content too long',
-        error: 'Text must be less than 50,000 characters'
+        error: 'Text must be less than 10,000 characters'
       });
     }
 

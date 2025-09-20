@@ -15,7 +15,7 @@ import interviewService from '../services/interviewService';
  * Interview Setup Page - Main page for configuring interview data
  * Allows users to upload:
  * 1. Resume (required)
- * 2. Job Description (required) 
+ * 2. Job Description (optional) 
  * 3. Company Info (optional)
  * 4. Other relevant info (multiple entries, optional)
  */
@@ -93,9 +93,12 @@ const InterviewSetupPage: React.FC = () => {
   }, [errors.otherInfo]);
 
   /**
-   * Add a new "other info" field
+   * Add a new "other info" field (max 3 entries)
    */
   const addOtherInfoField = () => {
+    if (interviewData.otherInfo.length >= 3) {
+      return; // Don't add more than 3 fields
+    }
     setInterviewData(prev => ({
       ...prev,
       otherInfo: [...prev.otherInfo, { method: 'text', content: '' }]
@@ -133,10 +136,9 @@ const InterviewSetupPage: React.FC = () => {
       }
     }
 
-    if (!interviewData.jobDescription) {
-      newErrors.jobDescription = { method: 'Job description is required' };
-    } else {
-      // Validate job description content
+    // Job description is now optional - no validation needed
+    if (interviewData.jobDescription) {
+      // Validate job description content only if provided
       const hasJobContent = 
         (interviewData.jobDescription.method === 'file' && interviewData.jobDescription.file) ||
         (interviewData.jobDescription.method === 'text' && interviewData.jobDescription.content?.trim()) ||
@@ -183,7 +185,7 @@ const InterviewSetupPage: React.FC = () => {
         }
       }
 
-      // Process job description
+      // Process job description (optional)
       if (interviewData.jobDescription) {
         setProcessingStep('Processing job description...');
         const result = await interviewService.upload(interviewData.jobDescription, 'jobDescription');
@@ -195,9 +197,8 @@ const InterviewSetupPage: React.FC = () => {
             filename: interviewData.jobDescription.file?.name,
             url: interviewData.jobDescription.url
           });
-        } else {
-          throw new Error(result.error || 'Failed to process job description');
         }
+        // Don't throw error for optional fields
       }
 
       // Process company info (optional)
@@ -361,7 +362,7 @@ const InterviewSetupPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-white">Job Description</h2>
-                <p className="text-sm text-slate-400">The role you're interviewing for</p>
+                <p className="text-sm text-slate-400">The role you're interviewing for (optional)</p>
               </div>
             </div>
             
@@ -374,7 +375,6 @@ const InterviewSetupPage: React.FC = () => {
                 text: "Paste the job description here...",
                 url: "Job posting URL from company website or job board"
               }}
-              required
             />
           </div>
 
@@ -417,10 +417,15 @@ const InterviewSetupPage: React.FC = () => {
               
               <button
                 onClick={addOtherInfoField}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-300 bg-blue-500/20 rounded-lg hover:bg-blue-500/30 border border-blue-500/30 transition-colors"
+                disabled={interviewData.otherInfo.length >= 3}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                  interviewData.otherInfo.length >= 3
+                    ? 'text-slate-500 bg-slate-700/50 border-slate-600 cursor-not-allowed'
+                    : 'text-blue-300 bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30'
+                }`}
               >
                 <Plus className="w-4 h-4" />
-                Add Field
+                {interviewData.otherInfo.length >= 3 ? 'Maximum 3 Fields' : 'Add Field'}
               </button>
             </div>
 
@@ -434,10 +439,7 @@ const InterviewSetupPage: React.FC = () => {
               <div className="space-y-6">
                 {interviewData.otherInfo.map((data, index) => (
                   <div key={index} className="relative">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-slate-300">
-                        Additional Info #{index + 1}
-                      </span>
+                    <div className="flex items-center justify-end mb-3">
                       <button
                         onClick={() => removeOtherInfoField(index)}
                         className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300"
@@ -495,7 +497,7 @@ const InterviewSetupPage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  Generate Questions
+                  Start Interview
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

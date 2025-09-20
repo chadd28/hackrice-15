@@ -60,64 +60,111 @@ export const generateQuestions = async (req: Request, res: Response) => {
       .join('\n\n');
 
     // Create comprehensive prompt for Gemini
+    console.log('🔍 DEBUGGING CONTENT RECEIVED BY GEMINI:');
+    console.log('==========================================');
+    console.log('📄 RESUME CONTENT:');
+    console.log(resumeContent || 'No resume content provided');
+    console.log('\n📋 JOB DESCRIPTION CONTENT:');
+    console.log(jobDescContent || 'No job description content provided');
+    console.log('\n🏢 COMPANY CONTENT:');
+    console.log(companyContent || 'No company content provided');
+    console.log('\n📝 OTHER CONTENT:');
+    console.log(otherContent || 'No other content provided');
+    console.log('==========================================\n');
+
     const prompt = `
-You are an expert technical interviewer tasked with creating personalized interview questions based on the candidate's background and the specific job they're applying for.
+🚨 **CRITICAL INSTRUCTIONS - READ CAREFULLY**
 
-**Candidate Resume:**
-${resumeContent}
+You are a professional interviewer creating questions for a job candidate. You MUST follow these rules EXACTLY:
 
-**Job Description:**
-${jobDescContent}
+**RULE #1: ONLY USE INFORMATION PROVIDED BELOW**
+- You can ONLY reference content from the candidate's uploaded materials
+- You MUST NOT assume, infer, or invent any work experience, companies, projects, or skills
+- If information is missing, ask GENERIC questions instead
 
-${companyContent ? `**Company Information:**\n${companyContent}\n` : ''}
+**RULE #2: NEVER HALLUCINATE OR INVENT**
+- Do NOT mention specific companies unless they appear in the uploaded content
+- Do NOT mention specific technologies unless they appear in the uploaded content  
+- Do NOT mention specific projects unless they appear in the uploaded content
+- Do NOT assume years of experience or team sizes
+- Do NOT invent leadership experience or accomplishments
 
-${otherContent ? `**Additional Information:**\n${otherContent}\n` : ''}
+**RULE #3: WHEN IN DOUBT, USE GENERIC QUESTIONS**
+- If you cannot find specific details in the content, ask general behavioral/technical questions
+- Generic questions are better than invented specifics
 
-Please generate exactly 8 technical questions and 6 behavioral questions that are:
+**UPLOADED CONTENT TO ANALYZE:**
 
-1. **Highly relevant** to both the candidate's experience and the job requirements
-2. **Appropriately challenging** based on the role level
-3. **Specific** to the technologies, skills, and experiences mentioned
-4. **Well-structured** for a realistic interview scenario
+**RESUME CONTENT:**
+${resumeContent || 'No resume content provided'}
 
-For each question, provide:
-- The question text
-- Category (technical or behavioral)
-- Difficulty level (easy, medium, hard)
-- Relevant tags/keywords
-- Brief context explaining why this question is relevant
+**JOB DESCRIPTION:**
+${jobDescContent || 'No job description provided'}
 
-Format your response as valid JSON with this exact structure:
+${companyContent ? `**COMPANY INFORMATION:**\n${companyContent}\n` : ''}
+
+${otherContent ? `**ADDITIONAL INFORMATION:**\n${otherContent}\n` : ''}
+
+**QUESTION GENERATION INSTRUCTIONS:**
+
+Generate exactly 8 technical questions and 6 behavioral questions. 
+
+**FOR TECHNICAL QUESTIONS:**
+- Only reference technologies/tools mentioned in the uploaded content
+- If no specific technologies are mentioned, ask general technical questions
+- Focus on problem-solving, coding practices, and technical thinking
+
+**FOR BEHAVIORAL QUESTIONS:**
+- MUST include these 2 required questions:
+  1. "Tell me about a time where you faced a significant challenge in a project. How did you overcome it?"
+  2. "Describe a situation where you had to work with a difficult team member or stakeholder. How did you handle it?"
+- For other behavioral questions, only reference specific experiences if clearly mentioned in uploads
+- Otherwise, ask general behavioral questions about teamwork, problem-solving, leadership
+
+**EXAMPLES OF CORRECT APPROACH:**
+
+✅ GOOD (when resume mentions JavaScript):
+"I see from your resume that you have experience with JavaScript. Can you walk me through your approach to debugging JavaScript applications?"
+
+✅ GOOD (when no specific tech mentioned):
+"How do you approach learning new programming languages or frameworks?"
+
+❌ WRONG (inventing experience):
+"Given your experience at Google..." (when Google isn't mentioned)
+"Your background in microservices..." (when microservices isn't mentioned)
+
+**OUTPUT FORMAT:**
+Return valid JSON with this structure:
+
 {
   "technical": [
     {
       "id": "tech_1",
       "question": "Question text here",
-      "category": "technical",
-      "difficulty": "medium",
-      "tags": ["react", "frontend"],
-      "context": "This question tests understanding of React concepts mentioned in the resume and required for the frontend role."
+      "category": "technical", 
+      "difficulty": "easy|medium|hard",
+      "tags": ["relevant", "tags"],
+      "context": "Explanation of why this question is relevant"
     }
   ],
   "behavioral": [
     {
-      "id": "behav_1", 
-      "question": "Question text here",
+      "id": "behav_1",
+      "question": "Question text here", 
       "category": "behavioral",
-      "difficulty": "medium",
-      "tags": ["leadership", "teamwork"],
-      "context": "This explores leadership experience mentioned in the resume, relevant for the senior role."
+      "difficulty": "easy|medium|hard", 
+      "tags": ["relevant", "tags"],
+      "context": "Explanation of why this question is relevant"
     }
   ]
 }
 
-Ensure questions are:
-- **Technical**: Focus on coding, system design, problem-solving, architecture, specific technologies
-- **Behavioral**: Focus on STAR method scenarios, leadership, conflict resolution, team dynamics, past experiences
-- **Diverse**: Cover different aspects of the role and candidate's background
-- **Realistic**: Questions that would actually be asked in a professional interview
+🚨 **FINAL CHECK BEFORE RESPONDING:**
+- Are you referencing any companies/projects/technologies NOT in the uploaded content? → REMOVE THEM
+- Are you assuming experience levels not stated? → USE GENERIC QUESTIONS  
+- Are you inventing details? → STICK TO WHAT'S PROVIDED
 
-Generate the questions now:`;
+Generate the interview questions now, following these rules strictly:`;
 
     // Get the generative model
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
@@ -180,54 +227,118 @@ function createFallbackQuestions(resumeContent: string, jobDescContent: string):
   const technical: Question[] = [
     {
       id: 'tech_fallback_1',
-      question: 'Can you walk me through your approach to solving a complex technical problem you\'ve encountered?',
+      question: 'Walk me through your approach to debugging a complex issue in a production system. What tools and methodologies do you use?',
       category: 'technical',
       difficulty: 'medium',
-      tags: ['problem-solving'],
-      context: 'General technical problem-solving assessment'
+      tags: ['debugging', 'production-systems', 'problem-solving'],
+      context: 'Assesses systematic debugging approach and production experience'
     },
     {
       id: 'tech_fallback_2',
-      question: 'How do you ensure code quality and maintainability in your projects?',
+      question: 'How do you ensure code quality and maintainability in your projects? What practices and tools do you implement?',
       category: 'technical',
       difficulty: 'medium',
-      tags: ['code-quality', 'best-practices'],
-      context: 'Code quality and development practices'
+      tags: ['code-quality', 'best-practices', 'maintainability'],
+      context: 'Evaluates understanding of software engineering best practices'
     },
     {
       id: 'tech_fallback_3',
-      question: 'Describe a time when you had to learn a new technology quickly. How did you approach it?',
+      question: 'Describe a time when you had to optimize the performance of an application or system. What was your approach and what results did you achieve?',
+      category: 'technical',
+      difficulty: 'medium',
+      tags: ['performance-optimization', 'system-design', 'metrics'],
+      context: 'Tests performance optimization skills and results-oriented thinking'
+    },
+    {
+      id: 'tech_fallback_4',
+      question: 'How do you approach learning and staying current with new technologies in your field? Can you give me an example?',
       category: 'technical',
       difficulty: 'easy',
-      tags: ['learning', 'adaptability'],
-      context: 'Learning agility and adaptability'
+      tags: ['learning', 'technology-trends', 'professional-development'],
+      context: 'Assesses commitment to continuous learning and technology adoption'
+    },
+    {
+      id: 'tech_fallback_5',
+      question: 'Explain how you would design a system to handle a significant increase in user traffic. What factors would you consider?',
+      category: 'technical',
+      difficulty: 'hard',
+      tags: ['system-design', 'scalability', 'architecture'],
+      context: 'Tests system design thinking and scalability considerations'
+    },
+    {
+      id: 'tech_fallback_6',
+      question: 'Tell me about a technical decision you made that you later regretted. What did you learn from it?',
+      category: 'technical',
+      difficulty: 'medium',
+      tags: ['decision-making', 'learning', 'retrospection'],
+      context: 'Evaluates learning from experience and technical judgment evolution'
+    },
+    {
+      id: 'tech_fallback_7',
+      question: 'How do you approach code reviews? What do you look for when reviewing others\' code?',
+      category: 'technical',
+      difficulty: 'easy',
+      tags: ['code-review', 'collaboration', 'quality-assurance'],
+      context: 'Assesses collaborative development practices and quality standards'
+    },
+    {
+      id: 'tech_fallback_8',
+      question: 'Describe your experience with testing. How do you decide what to test and what testing strategies do you employ?',
+      category: 'technical',
+      difficulty: 'medium',
+      tags: ['testing', 'quality-assurance', 'strategy'],
+      context: 'Evaluates testing mindset and quality assurance practices'
     }
   ];
 
   const behavioral: Question[] = [
     {
       id: 'behav_fallback_1',
-      question: 'Tell me about a challenging project you worked on. What made it challenging and how did you overcome the obstacles?',
+      question: 'Tell me about a time where you faced a significant challenge in a project. How did you overcome it?',
       category: 'behavioral',
       difficulty: 'medium',
-      tags: ['project-management', 'problem-solving'],
-      context: 'Project experience and problem-solving skills'
+      tags: ['problem-solving', 'resilience', 'challenge'],
+      context: 'Essential behavioral question to assess problem-solving abilities and resilience under pressure'
     },
     {
       id: 'behav_fallback_2',
-      question: 'Describe a situation where you had to work with a difficult team member. How did you handle it?',
+      question: 'Describe a situation where you had to work with a difficult team member or stakeholder. How did you handle it?',
       category: 'behavioral',
       difficulty: 'medium',
-      tags: ['teamwork', 'conflict-resolution'],
-      context: 'Team collaboration and conflict resolution'
+      tags: ['teamwork', 'conflict-resolution', 'communication'],
+      context: 'Evaluates interpersonal skills and conflict resolution abilities'
     },
     {
       id: 'behav_fallback_3',
-      question: 'What motivates you in your work, and how do you stay motivated during challenging times?',
+      question: 'Tell me about a project you led or contributed to significantly. What was your role and how did you ensure its success?',
+      category: 'behavioral',
+      difficulty: 'medium',
+      tags: ['leadership', 'project-management', 'accountability'],
+      context: 'Assesses leadership capabilities and project management skills'
+    },
+    {
+      id: 'behav_fallback_4',
+      question: 'Describe a time when you had to learn a new technology or skill quickly to complete a project. How did you approach it?',
       category: 'behavioral',
       difficulty: 'easy',
-      tags: ['motivation', 'resilience'],
-      context: 'Personal motivation and resilience'
+      tags: ['learning', 'adaptability', 'self-development'],
+      context: 'Evaluates learning agility and adaptability to new technologies'
+    },
+    {
+      id: 'behav_fallback_5',
+      question: 'Tell me about a time when you disagreed with a technical decision made by your team or manager. How did you handle it?',
+      category: 'behavioral',
+      difficulty: 'medium',
+      tags: ['communication', 'technical-judgment', 'professional-growth'],
+      context: 'Tests professional communication and technical decision-making skills'
+    },
+    {
+      id: 'behav_fallback_6',
+      question: 'What motivates you in your work, and how do you stay motivated during challenging or repetitive tasks?',
+      category: 'behavioral',
+      difficulty: 'easy',
+      tags: ['motivation', 'resilience', 'self-awareness'],
+      context: 'Understands personal motivation and long-term engagement potential'
     }
   ];
 

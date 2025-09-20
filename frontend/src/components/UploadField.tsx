@@ -266,7 +266,7 @@ export const UploadField: React.FC<UploadFieldProps> = ({
           />
           <div className="flex justify-between text-xs text-slate-400">
             <span>{value?.content?.length || 0} characters</span>
-            <span>Max 50,000 characters</span>
+            <span>Max 10,000 characters</span>
           </div>
 
           {error?.content && (

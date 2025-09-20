@@ -107,8 +107,8 @@ class InterviewService {
         throw new Error('Text content cannot be empty');
       }
 
-      if (text.length > 50000) {
-        throw new Error('Text content is too long (max 50,000 characters)');
+      if (text.length > 10000) {
+        throw new Error('Text content is too long (max 10,000 characters)');
       }
 
       const response = await fetch(`${API_BASE_URL}/api/interview/upload/text`, {
@@ -143,9 +143,15 @@ class InterviewService {
    */
   async uploadUrl(url: string, type: string): Promise<UploadResponse> {
     try {
+      // Normalize URL - add https:// if no protocol is provided
+      let normalizedUrl = url.trim();
+      if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+        normalizedUrl = 'https://' + normalizedUrl;
+      }
+
       // Validate URL format
       try {
-        new URL(url);
+        new URL(normalizedUrl);
       } catch {
         throw new Error('Please enter a valid URL');
       }
@@ -154,7 +160,7 @@ class InterviewService {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
-          url,
+          url: normalizedUrl,  // Send the normalized URL
           type
         })
       });

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { uploadText, uploadUrl, uploadFile, getSession, updateSession } from '../controllers/uploadController';
+import { uploadText, uploadUrl, uploadFile, getSession, updateSession, uploadMiddleware } from '../controllers/uploadController';
 import { generateQuestions } from '../controllers/geminiController';
 
 const router = Router();
@@ -14,8 +14,8 @@ router.post('/upload/text', uploadText);
 // URL upload endpoint  
 router.post('/upload/url', uploadUrl);
 
-// File upload endpoint (simplified)
-router.post('/upload/file', uploadFile);
+// File upload endpoint with multer middleware for PDF processing
+router.post('/upload/file', uploadMiddleware, uploadFile);
 
 /**
  * Question generation route
