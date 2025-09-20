@@ -9,10 +9,8 @@ import DashboardPage from './pages/DashboardPage'
 import SingleQuestionPage from './pages/SingleQuestionPage'
 import SpeechToTextPage from './pages/SpeechToTextPage'
 import InterviewSetupPage from './pages/InterviewSetupPage'
-import InterviewPage from './pages/InterviewPage'
-import InterviewFeedbackPage from './pages/InterviewFeedbackPage'
+import InterviewSessionPage from './pages/InterviewSessionPage'
 import ProtectedRoute from './components/ProtectedRoute'
-import JobBriefTester from './pages/JobBriefTester'
 import TechnicalQuestionTestPage from './pages/TechnicalQuestionTestPage'
 
 function App(): React.ReactElement {
