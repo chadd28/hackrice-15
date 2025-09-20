@@ -8,6 +8,8 @@ import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import SingleQuestionPage from './pages/SingleQuestionPage'
 import SpeechToTextPage from './pages/SpeechToTextPage'
+import InterviewSetupPage from './pages/InterviewSetupPage'
+import InterviewSessionPage from './pages/InterviewSessionPage'
 
 function App(): React.ReactElement {
   return (
@@ -20,6 +22,8 @@ function App(): React.ReactElement {
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/practice/single" element={<SingleQuestionPage />} />
       <Route path="/speech-to-text" element={<SpeechToTextPage />} />
+      <Route path="/interview/setup" element={<InterviewSetupPage />} />
+      <Route path="/interview/session" element={<InterviewSessionPage />} />
     </Routes>
   )
 }

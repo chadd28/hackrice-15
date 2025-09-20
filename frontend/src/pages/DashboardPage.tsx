@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, LogOut, MessageSquare, BarChart3 } from 'lucide-react';
+import { User, LogOut, MessageSquare, BarChart3, Briefcase } from 'lucide-react';
 import { authService } from '../services/authService';
 
 function DashboardPage(): React.ReactElement {
@@ -119,32 +119,34 @@ function DashboardPage(): React.ReactElement {
                 <BarChart3 className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-semibold text-white">Mock Interview</h2>
-                <p className="text-slate-300">Complete 4-question interview simulation with comprehensive feedback</p>
+                <h2 className="text-2xl font-semibold text-white">AI Interview Simulator</h2>
+                <p className="text-slate-300">Upload your info and get personalized technical & behavioral questions</p>
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-400 mb-1">4</div>
-                <div className="text-sm text-slate-300">Questions</div>
+                <div className="text-2xl font-bold text-blue-400 mb-1">📄</div>
+                <div className="text-sm text-slate-300">Resume</div>
               </div>
               <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                <div className="text-2xl font-bold text-green-400 mb-1">~15</div>
-                <div className="text-sm text-slate-300">Minutes</div>
+                <div className="text-2xl font-bold text-green-400 mb-1">💼</div>
+                <div className="text-sm text-slate-300">Job Info</div>
               </div>
               <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-400 mb-1">AI</div>
-                <div className="text-sm text-slate-300">Feedback</div>
+                <div className="text-2xl font-bold text-purple-400 mb-1">🤖</div>
+                <div className="text-sm text-slate-300">AI Generated</div>
               </div>
               <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                <div className="text-2xl font-bold text-pink-400 mb-1">★</div>
-                <div className="text-sm text-slate-300">Score</div>
+                <div className="text-2xl font-bold text-pink-400 mb-1">⭐</div>
+                <div className="text-sm text-slate-300">Personalized</div>
               </div>
             </div>
 
-            <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 py-3 rounded-lg text-white font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 text-lg">
-              Start Mock Interview
+            <button 
+              onClick={() => window.location.href = '/interview/setup'}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 py-3 rounded-lg text-white font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 text-lg">
+              Start AI Interview
             </button>
           </div>
         </motion.div>
