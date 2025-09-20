@@ -239,11 +239,16 @@ export const uploadText = async (req: Request, res: Response) => {
       });
     }
 
-    if (text.length > 10000) {
+    // Set character limits based on content type
+    const isResume = type === 'resume';
+    const maxLength = isResume ? 10000 : 20000;
+    const limitDescription = isResume ? '10,000' : '20,000';
+
+    if (text.length > maxLength) {
       return res.status(400).json({
         success: false,
         message: 'Text content too long',
-        error: 'Text must be less than 10,000 characters'
+        error: `Text must be less than ${limitDescription} characters`
       });
     }
 

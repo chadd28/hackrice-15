@@ -77,8 +77,8 @@ const InterviewSetupPage: React.FC = () => {
     setInterviewData(prev => ({
       ...prev,
       otherInfo: prev.otherInfo.map((item, i) => 
-        i === index ? data : item
-      ).filter(Boolean) as UploadData[]
+        i === index ? (data || {} as UploadData) : item
+      )
     }));
     
     // Clear other info errors for this index
@@ -101,7 +101,7 @@ const InterviewSetupPage: React.FC = () => {
     }
     setInterviewData(prev => ({
       ...prev,
-      otherInfo: [...prev.otherInfo, { method: 'text', content: '' }]
+      otherInfo: [...prev.otherInfo, {} as UploadData]
     }));
   };
 
@@ -136,18 +136,7 @@ const InterviewSetupPage: React.FC = () => {
       }
     }
 
-    // Job description is now optional - no validation needed
-    if (interviewData.jobDescription) {
-      // Validate job description content only if provided
-      const hasJobContent = 
-        (interviewData.jobDescription.method === 'file' && interviewData.jobDescription.file) ||
-        (interviewData.jobDescription.method === 'text' && interviewData.jobDescription.content?.trim()) ||
-        (interviewData.jobDescription.method === 'url' && interviewData.jobDescription.url?.trim());
-      
-      if (!hasJobContent) {
-        newErrors.jobDescription = { method: 'Please provide job description content' };
-      }
-    }
+    // Job description is completely optional - no validation needed
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -220,7 +209,7 @@ const InterviewSetupPage: React.FC = () => {
       // Process other info (optional)
       for (let i = 0; i < interviewData.otherInfo.length; i++) {
         const otherData = interviewData.otherInfo[i];
-        if (otherData) {
+        if (otherData && otherData.method) {
           setProcessingStep(`Processing additional information ${i + 1}...`);
           const result = await interviewService.upload(otherData, 'otherInfo');
           if (result.success && result.content) {
@@ -255,7 +244,6 @@ const InterviewSetupPage: React.FC = () => {
       questionsResult.questions.technical.forEach((q, i) => {
         console.log(`${i + 1}. ${q.question}`);
         console.log(`   Difficulty: ${q.difficulty} | Tags: ${q.tags.join(', ')}`);
-        console.log(`   Context: ${q.context}`);
         console.log('');
       });
       
@@ -263,20 +251,10 @@ const InterviewSetupPage: React.FC = () => {
       questionsResult.questions.behavioral.forEach((q, i) => {
         console.log(`${i + 1}. ${q.question}`);
         console.log(`   Difficulty: ${q.difficulty} | Tags: ${q.tags.join(', ')}`);
-        console.log(`   Context: ${q.context}`);
         console.log('');
       });
       
       console.log('================================');
-      console.log('💡 TESTING TIPS:');
-      console.log('To access questions individually:');
-      console.log('const questions = JSON.parse(localStorage.getItem("interview-questions"));');
-      console.log('const firstTechnical = questions.technical[0];');
-      console.log('const firstBehavioral = questions.behavioral[0];');
-      console.log('');
-      console.log('To simulate answering questions one by one:');
-      console.log('let currentIndex = 0;');
-      console.log('const nextQuestion = () => questions.technical[currentIndex++];');
 
       // Save session state for future use
       await interviewService.saveSession({
@@ -286,8 +264,7 @@ const InterviewSetupPage: React.FC = () => {
         questions: questionsResult.questions
       });
 
-      // Show success message and go back to dashboard
-      alert(`✅ Success! Generated ${questionsResult.questions.technical.length} technical and ${questionsResult.questions.behavioral.length} behavioral questions!\n\nCheck the browser console (F12) to see all the questions and testing tips.`);
+      // Navigate to dashboard
       navigate('/dashboard');
 
     } catch (error) {
@@ -351,6 +328,7 @@ const InterviewSetupPage: React.FC = () => {
                 url: "https://linkedin.com/in/yourprofile or your online resume"
               }}
               required
+              contentType="resume"
             />
           </div>
 
@@ -375,6 +353,7 @@ const InterviewSetupPage: React.FC = () => {
                 text: "Paste the job description here...",
                 url: "Job posting URL from company website or job board"
               }}
+              contentType="jobDescription"
             />
           </div>
 
@@ -399,6 +378,7 @@ const InterviewSetupPage: React.FC = () => {
                 text: "Company mission, values, culture information...",
                 url: "Company website, about page, or careers page"
               }}
+              contentType="companyInfo"
             />
           </div>
 
@@ -458,6 +438,7 @@ const InterviewSetupPage: React.FC = () => {
                         text: "Portfolio, projects, certifications, or other relevant information...",
                         url: "Portfolio website, GitHub profile, or other relevant links"
                       }}
+                      contentType="otherInfo"
                     />
                   </div>
                 ))}

@@ -41,11 +41,16 @@ export const uploadText = async (req: Request, res: Response) => {
       });
     }
 
-    if (text.length > 10000) {
+    // Set character limits based on content type
+    const isResume = type === 'resume';
+    const maxLength = isResume ? 10000 : 20000;
+    const limitDescription = isResume ? '10,000' : '20,000';
+
+    if (text.length > maxLength) {
       return res.status(400).json({
         success: false,
         message: 'Text content too long',
-        error: 'Text must be less than 10,000 characters'
+        error: `Text must be less than ${limitDescription} characters`
       });
     }
 
@@ -82,7 +87,7 @@ export const uploadText = async (req: Request, res: Response) => {
 /**
  * Extract content from a URL using web scraping
  */
-async function extractUrlContent(url: string): Promise<string> {
+async function extractUrlContent(url: string, type: string): Promise<string> {
   try {
     // Normalize URL - add https:// if no protocol is provided
     let normalizedUrl = url.trim();
@@ -91,23 +96,58 @@ async function extractUrlContent(url: string): Promise<string> {
     }
     
     // Validate URL
-    const parsedUrl = new URL(normalizedUrl);
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(normalizedUrl);
+    } catch (urlError) {
+      console.error(`❌ Invalid URL format: ${normalizedUrl}`, urlError);
+      throw new Error(`Invalid URL format: ${normalizedUrl}`);
+    }
+    
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       throw new Error('Only HTTP and HTTPS URLs are supported');
     }
-
-    console.log(`🌐 Extracting content from URL: ${normalizedUrl}`);
-
-    // Fetch the webpage
-    const response = await axios.get(normalizedUrl, {
-      timeout: 10000, // 10 second timeout
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    // Fetch the webpage with more robust error handling
+    let response;
+    try {
+      response = await axios.get(normalizedUrl, {
+        timeout: 15000, // Increased timeout to 15 seconds
+        maxRedirects: 5,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate',
+          'Connection': 'keep-alive'
+        },
+        validateStatus: function (status) {
+          return status >= 200 && status < 400; // Accept redirects
+        }
+      });
+    } catch (fetchError) {
+      console.error(`❌ Failed to fetch URL: ${normalizedUrl}`, fetchError);
+      if (fetchError instanceof Error) {
+        if (fetchError.message.includes('timeout')) {
+          throw new Error('Website took too long to respond. Please try a different URL.');
+        } else if (fetchError.message.includes('ENOTFOUND')) {
+          throw new Error('Website not found. Please check the URL and try again.');
+        } else if (fetchError.message.includes('ECONNREFUSED')) {
+          throw new Error('Connection refused. The website may be temporarily unavailable.');
+        } else {
+          throw new Error(`Failed to access website: ${fetchError.message}`);
+        }
       }
-    });
+      throw new Error('Failed to access the website');
+    }
 
     // Parse HTML content
-    const $ = cheerio.load(response.data);
+    let $;
+    try {
+      $ = cheerio.load(response.data);
+    } catch (parseError) {
+      console.error(`❌ Failed to parse HTML content`, parseError);
+      throw new Error('Failed to parse webpage content. The page may not be valid HTML.');
+    }
 
     // Remove script and style elements
     $('script, style, nav, footer, header, .nav, .footer, .header, .sidebar').remove();
@@ -149,16 +189,19 @@ async function extractUrlContent(url: string): Promise<string> {
       .replace(/\n\s*\n/g, '\n') // Remove extra newlines
       .trim();
 
+    // Set character limits based on content type
+    const isResume = type === 'resume';
+    const maxLength = isResume ? 10000 : 20000;
+    
     // Limit content length to prevent overwhelming the AI
-    if (content.length > 10000) {
-      content = content.substring(0, 10000) + '... [Content truncated]';
+    if (content.length > maxLength) {
+      content = content.substring(0, maxLength) + '... [Content truncated]';
     }
 
     if (!content || content.length < 50) {
-      throw new Error('Unable to extract meaningful content from the webpage');
+      throw new Error('Unable to extract meaningful content from the webpage. The page may be empty or contain only images/videos.');
     }
 
-    console.log(`✅ Successfully extracted ${content.length} characters from URL`);
     return content;
 
   } catch (error) {
@@ -175,15 +218,10 @@ async function extractUrlContent(url: string): Promise<string> {
  */
 export const uploadUrl = async (req: Request, res: Response) => {
   try {
-    console.log('🌐 URL upload request received:', req.body);
-    
     const { url, type } = req.body;
     const sessionId = req.headers['x-session-id'] as string;
 
-    console.log(`🌐 Processing URL: ${url}, Type: ${type}, Session: ${sessionId}`);
-
     if (!url || typeof url !== 'string') {
-      console.log('❌ URL validation failed: missing or invalid URL');
       return res.status(400).json({
         success: false,
         message: 'URL is required',
@@ -192,7 +230,6 @@ export const uploadUrl = async (req: Request, res: Response) => {
     }
 
     if (!sessionId) {
-      console.log('❌ Session validation failed: missing session ID');
       return res.status(400).json({
         success: false,
         message: 'Session ID required',
@@ -201,9 +238,7 @@ export const uploadUrl = async (req: Request, res: Response) => {
     }
 
     // Extract content from URL
-    console.log('🌐 Starting URL content extraction...');
-    const content = await extractUrlContent(url);
-    console.log(`✅ URL content extracted successfully: ${content.length} characters`);
+    const content = await extractUrlContent(url, type);
 
     // Store in session
     if (!sessions.has(sessionId)) {
@@ -217,8 +252,6 @@ export const uploadUrl = async (req: Request, res: Response) => {
       url,
       uploadedAt: new Date().toISOString()
     };
-
-    console.log(`✅ URL upload completed successfully for type: ${type}`);
 
     res.json({
       success: true,
@@ -241,34 +274,68 @@ export const uploadUrl = async (req: Request, res: Response) => {
 /**
  * Extract text content from PDF buffer using pdfjs-dist
  */
-async function extractPdfContent(buffer: Buffer, filename: string): Promise<string> {
+async function extractPdfContent(buffer: Buffer, filename: string, type: string): Promise<{content: string, metadata: {totalPages: number, successfulPages: number, allPageTexts: any[]}}> {
   try {
-    console.log(`📄 Extracting text from PDF: ${filename}`);
-    
-    // Use pdfjs-dist for PDF parsing with proper Node.js configuration
-    const pdfjsLib = await import('pdfjs-dist');
+    // Use pdfjs-dist legacy build for Node.js compatibility
+    let pdfjsLib;
+    try {
+      pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      
+      // Configure worker for legacy build (optional for Node.js)
+      const GlobalWorkerOptions = pdfjsLib.GlobalWorkerOptions;
+      if (!GlobalWorkerOptions.workerSrc) {
+        GlobalWorkerOptions.workerSrc = './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs';
+      }
+    } catch (importError) {
+      console.error('❌ Failed to import pdfjs-dist legacy:', importError);
+      throw new Error('PDF processing library is not available');
+    }
     
     // Configure the library for Node.js environment
     // Note: Worker is not needed in Node.js environment for basic text extraction
     
-    // Load the PDF document
-    const loadingTask = pdfjsLib.getDocument({
-      data: new Uint8Array(buffer),
-      verbosity: 0, // Reduce console output
-      useSystemFonts: true, // Use system fonts for better compatibility
-      disableFontFace: true // Disable font face for Node.js
-    });
+    // Load the PDF document with legacy-compatible options
+    let loadingTask;
+    try {
+      loadingTask = pdfjsLib.getDocument({
+        data: new Uint8Array(buffer),
+        verbosity: 0, // Reduce console output
+        stopAtErrors: false // Continue processing even if some pages have errors
+      });
+    } catch (loadError) {
+      console.error('❌ Failed to create PDF loading task:', loadError);
+      throw new Error('Failed to initialize PDF processing');
+    }
     
-    const pdfDocument = await loadingTask.promise;
+    let pdfDocument;
+    try {
+      pdfDocument = await loadingTask.promise;
+    } catch (loadError) {
+      console.error('❌ Failed to load PDF document:', loadError);
+      if (loadError instanceof Error) {
+        if (loadError.message.includes('Invalid PDF')) {
+          throw new Error('The uploaded file is not a valid PDF');
+        } else if (loadError.message.includes('password')) {
+          throw new Error('Password-protected PDFs are not supported');
+        } else {
+          throw new Error(`Failed to load PDF: ${loadError.message}`);
+        }
+      }
+      throw new Error('Failed to load PDF document');
+    }
+    
     const numPages = pdfDocument.numPages;
     
-    console.log(`📄 PDF has ${numPages} pages`);
+    if (numPages === 0) {
+      throw new Error('PDF appears to be empty (0 pages)');
+    }
     
     let fullText = '';
+    let successfulPages = 0;
+    let allPageTexts = []; // Store text from each page for detailed debugging
     
     // Extract text from each page
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-      console.log(`📄 Processing page ${pageNum}/${numPages}`);
       
       try {
         const page = await pdfDocument.getPage(pageNum);
@@ -280,13 +347,32 @@ async function extractPdfContent(buffer: Buffer, filename: string): Promise<stri
           .filter(text => text.length > 0)
           .join(' ');
         
+        // Store individual page text for debugging
+        allPageTexts.push({
+          pageNumber: pageNum,
+          rawText: pageText,
+          itemCount: textContent.items.length,
+          filteredItemCount: textContent.items.filter((item: any) => item.str && typeof item.str === 'string' && item.str.trim().length > 0).length
+        });
+        
         if (pageText.trim()) {
+          // Add page separator for multi-page documents
+          if (pageNum > 1) {
+            fullText += '\n\n--- PAGE ' + pageNum + ' ---\n\n';
+          }
           fullText += pageText + '\n\n';
+          successfulPages++;
         }
         
-        console.log(`📄 Page ${pageNum}: extracted ${pageText.length} characters`);
       } catch (pageError) {
         console.warn(`⚠️  Warning: Could not process page ${pageNum}:`, pageError);
+        allPageTexts.push({
+          pageNumber: pageNum,
+          error: pageError instanceof Error ? pageError.message : 'Unknown error',
+          rawText: '',
+          itemCount: 0,
+          filteredItemCount: 0
+        });
         continue; // Skip this page and continue with others
       }
     }
@@ -295,7 +381,7 @@ async function extractPdfContent(buffer: Buffer, filename: string): Promise<stri
     let content = fullText.trim();
     
     if (!content || content.length < 20) {
-      throw new Error('PDF appears to be empty or contains no extractable text. The PDF might be image-based or protected.');
+      throw new Error(`PDF appears to contain no extractable text. Processed ${successfulPages}/${numPages} pages successfully. The PDF might be image-based, scanned, or protected.`);
     }
 
     // Clean up the content
@@ -304,25 +390,37 @@ async function extractPdfContent(buffer: Buffer, filename: string): Promise<stri
       .replace(/\n\s*\n/g, '\n') // Remove extra newlines
       .trim();
 
+    // Set character limits based on content type
+    const isResume = type === 'resume';
+    const maxLength = isResume ? 10000 : 20000;
+    const limitDescription = isResume ? '10,000' : '20,000';
+
     // Limit content to prevent overwhelming the system
-    if (content.length > 10000) {
-      content = content.substring(0, 10000) + '\n\n[Content truncated - original was ' + fullText.length + ' characters]';
+    if (content.length > maxLength) {
+      content = content.substring(0, maxLength) + `\n\n[Content truncated - original was ${fullText.length} characters from ${successfulPages} pages]`;
     }
 
-    console.log(`✅ Successfully extracted ${content.length} characters from PDF`);
-    console.log(`📋 PDF Content Preview: ${content.substring(0, 200)}...`);
     
-    return content;
+    return {
+      content,
+      metadata: {
+        totalPages: numPages,
+        successfulPages,
+        allPageTexts
+      }
+    };
 
   } catch (error) {
     console.error(`❌ PDF extraction failed for ${filename}:`, error);
     
     // Provide more specific error messages
     if (error instanceof Error) {
-      if (error.message.includes('Invalid PDF')) {
+      if (error.message.includes('Invalid PDF') || error.message.includes('not a valid PDF')) {
         throw new Error('The uploaded file is not a valid PDF or is corrupted');
       } else if (error.message.includes('password')) {
         throw new Error('Password-protected PDFs are not supported');
+      } else if (error.message.includes('image-based') || error.message.includes('no extractable text')) {
+        throw new Error('This PDF appears to be image-based or scanned. Please use a PDF with selectable text or try OCR software first.');
       } else {
         throw new Error(`Failed to extract text from PDF: ${error.message}`);
       }
@@ -336,8 +434,10 @@ async function extractPdfContent(buffer: Buffer, filename: string): Promise<stri
  */
 export const uploadFile = async (req: Request, res: Response) => {
   try {
+    
     const { type } = req.body;
     const sessionId = req.headers['x-session-id'] as string;
+
 
     if (!sessionId) {
       return res.status(400).json({
@@ -359,6 +459,7 @@ export const uploadFile = async (req: Request, res: Response) => {
     const file = req.file;
     const filename = file.originalname;
 
+
     // Validate file type
     if (!filename.toLowerCase().endsWith('.pdf')) {
       return res.status(400).json({
@@ -369,40 +470,63 @@ export const uploadFile = async (req: Request, res: Response) => {
     }
 
     // Extract content from PDF
-    const content = await extractPdfContent(file.buffer, filename);
+    const pdfResult = await extractPdfContent(file.buffer, filename, type);
+    const content = pdfResult.content;
+    const { totalPages, successfulPages, allPageTexts } = pdfResult.metadata;
+    
 
-    // Log the extracted content for debugging
-    console.log('📄 PDF UPLOAD - EXTRACTED CONTENT:');
-    console.log('='.repeat(50));
-    console.log(`📁 Filename: ${filename}`);
-    console.log(`📊 Content Length: ${content.length} characters`);
-    console.log(`📝 Content Type: ${type}`);
-    console.log('📋 Full Extracted Text:');
-    console.log('-'.repeat(30));
-    console.log(content);
-    console.log('='.repeat(50));
+    // Log the extracted content for debugging with enhanced details
+    
+    // Count key resume elements for validation
+    const resumeKeywords = {
+      'email': (content.match(/@[\w\.-]+\.\w+/g) || []).length,
+      'phone': (content.match(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g) || []).length,
+      'education': (content.toLowerCase().match(/\b(university|college|degree|bachelor|master|phd|education)\b/g) || []).length,
+      'experience': (content.toLowerCase().match(/\b(experience|work|job|position|role|company)\b/g) || []).length,
+      'skills': (content.toLowerCase().match(/\b(skills|technologies|programming|software|tools)\b/g) || []).length,
+      'dates': (content.match(/\b(19|20)\d{2}\b/g) || []).length
+    };
+    
+    Object.entries(resumeKeywords).forEach(([category, count]) => {
+    });
+    
 
-    // Store in session
+    // Store in session with detailed logging
     if (!sessions.has(sessionId)) {
       sessions.set(sessionId, { uploads: {} });
     }
     
     const session = sessions.get(sessionId);
-    session.uploads[type] = {
+    const uploadData = {
       method: 'file',
       content,
       filename,
-      uploadedAt: new Date().toISOString()
+      uploadedAt: new Date().toISOString(),
+      metadata: {
+        originalSize: file.size,
+        extractedLength: content.length,
+        processingTime: Date.now() - Date.now(), // Will be updated below
+        pagesProcessed: successfulPages,
+        totalPages: totalPages
+      }
     };
+    
+    session.uploads[type] = uploadData;
+    
+    
+    // Log session content for verification
+
 
     res.json({
       success: true,
       message: 'File uploaded and processed successfully',
-      content: content.length > 500 ? content.substring(0, 500) + '...' : content // Return truncated preview
+      content: content // Return full content, not truncated
     });
 
   } catch (error) {
-    console.error('File upload error:', error);
+    console.error('❌ File upload error:', error);
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
     res.status(500).json({
       success: false,
       message: 'File processing failed',

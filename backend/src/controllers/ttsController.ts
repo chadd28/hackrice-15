@@ -9,11 +9,9 @@ export const testTTS = async (req: Request, res: Response) => {
       throw new Error("Google TTS API key not found in environment variables");
     }
 
-    console.log("API Key found:", API_KEY.substring(0, 10) + "...");
 
     const text = "Hello! Welcome to your interview. My name is John, and I’ll be asking you a few questions today.";
 
-    console.log("Making request to Google TTS API...");
 
     // Call Google TTS REST API
     const response = await axios.post(
@@ -27,8 +25,6 @@ export const testTTS = async (req: Request, res: Response) => {
       }
     );
 
-    console.log("Response status:", response.status);
-    console.log("Response data keys:", Object.keys(response.data));
 
     const audioContent = response.data.audioContent;
 
@@ -37,7 +33,6 @@ export const testTTS = async (req: Request, res: Response) => {
       throw new Error("No audio returned from TTS API");
     }
 
-    console.log("Audio content length:", audioContent.length);
 
     // Return base64 audio to frontend
     res.json({
@@ -81,7 +76,6 @@ export const generateIntroduction = async (req: Request, res: Response) => {
     // Generate personalized introduction text
     const introText = `Hi! Welcome to your interview for the ${position} position at ${company}. My name is ${interviewerName}, and I'll be asking you a few questions today. Let's begin with some behavioral questions to better understand your experience and approach to different situations.`;
 
-    console.log("Generating introduction TTS for:", { position, company, interviewerName });
 
     // Call Google TTS REST API
     const response = await axios.post(
@@ -107,7 +101,6 @@ export const generateIntroduction = async (req: Request, res: Response) => {
       throw new Error("No audio returned from TTS API");
     }
 
-    console.log("Introduction audio generated successfully");
 
     // Return base64 audio to frontend
     res.json({
@@ -150,7 +143,6 @@ export const askQuestion = async (req: Request, res: Response) => {
       });
     }
 
-    console.log("Generating TTS for question:", question.substring(0, 50) + "...");
 
     // Call Google TTS REST API
     const response = await axios.post(
@@ -176,7 +168,6 @@ export const askQuestion = async (req: Request, res: Response) => {
       throw new Error("No audio returned from TTS API");
     }
 
-    console.log("Question audio generated successfully");
 
     // Return base64 audio to frontend
     res.json({

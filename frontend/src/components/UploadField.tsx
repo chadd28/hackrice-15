@@ -12,6 +12,7 @@ interface UploadFieldProps {
     url?: string;
   };
   required?: boolean;
+  contentType?: string; // Type of content for character limit determination
 }
 
 /**
@@ -26,7 +27,8 @@ export const UploadField: React.FC<UploadFieldProps> = ({
   onChange,
   error,
   placeholder = {},
-  required = false
+  required = false,
+  contentType = 'other'
 }) => {
   const [selectedMethod, setSelectedMethod] = useState<UploadMethod | null>(
     value?.method || null
@@ -266,7 +268,7 @@ export const UploadField: React.FC<UploadFieldProps> = ({
           />
           <div className="flex justify-between text-xs text-slate-400">
             <span>{value?.content?.length || 0} characters</span>
-            <span>Max 10,000 characters</span>
+            <span>Max {contentType === 'resume' ? '10,000' : '20,000'} characters</span>
           </div>
 
           {error?.content && (

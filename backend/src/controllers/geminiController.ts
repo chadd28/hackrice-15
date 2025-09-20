@@ -18,7 +18,6 @@ interface Question {
   category: 'technical' | 'behavioral';
   difficulty: 'easy' | 'medium' | 'hard';
   tags: string[];
-  context?: string;
 }
 
 interface GeneratedQuestions {
@@ -59,19 +58,6 @@ export const generateQuestions = async (req: Request, res: Response) => {
       .map(c => c.content)
       .join('\n\n');
 
-    // Create comprehensive prompt for Gemini
-    console.log('🔍 DEBUGGING CONTENT RECEIVED BY GEMINI:');
-    console.log('==========================================');
-    console.log('📄 RESUME CONTENT:');
-    console.log(resumeContent || 'No resume content provided');
-    console.log('\n📋 JOB DESCRIPTION CONTENT:');
-    console.log(jobDescContent || 'No job description content provided');
-    console.log('\n🏢 COMPANY CONTENT:');
-    console.log(companyContent || 'No company content provided');
-    console.log('\n📝 OTHER CONTENT:');
-    console.log(otherContent || 'No other content provided');
-    console.log('==========================================\n');
-
     const prompt = `
 🚨 **CRITICAL INSTRUCTIONS - READ CAREFULLY**
 
@@ -93,6 +79,12 @@ You are a professional interviewer creating questions for a job candidate. You M
 - If you cannot find specific details in the content, ask general behavioral/technical questions
 - Generic questions are better than invented specifics
 
+**RULE #4: ACTIVELY INTEGRATE ALL PROVIDED CONTENT**
+- If job description is provided, YOU MUST create questions that reference specific requirements, technologies, or responsibilities mentioned
+- If additional information is provided, YOU MUST incorporate portfolio projects, certifications, or other details
+- Create questions that connect the candidate's background to the specific role requirements
+- Make the questions feel tailored to both the candidate AND the position
+
 **UPLOADED CONTENT TO ANALYZE:**
 
 **RESUME CONTENT:**
@@ -107,31 +99,91 @@ ${otherContent ? `**ADDITIONAL INFORMATION:**\n${otherContent}\n` : ''}
 
 **QUESTION GENERATION INSTRUCTIONS:**
 
-Generate exactly 8 technical questions and 6 behavioral questions. 
+Generate exactly 6 technical questions and 8 behavioral questions. 
+
+**FOCUS AREAS FOR RESUME ANALYSIS:**
+- PRIORITIZE: Internships, work experience, extracurricular activities, leadership roles, clubs/organizations
+- EMPHASIZE: Interpersonal experiences, teamwork, initiative, problem-solving approach, values alignment
+- MODERATE: Skills and technologies (important but not the primary focus)
+- DE-EMPHASIZE: Projects (only use 1-2 project questions maximum - focus on the learning/collaboration aspect rather than technical details)
+- AVOID: Grades, GPA, coursework, academic achievements (unless directly relevant to job requirements)
 
 **FOR TECHNICAL QUESTIONS:**
+- Focus on practical skills and technologies mentioned in the resume
+- Ask about approach to learning and problem-solving
+- **IF JOB DESCRIPTION IS PROVIDED**: Reference specific requirements, technologies, or responsibilities mentioned in the job posting
 - Only reference technologies/tools mentioned in the uploaded content
 - If no specific technologies are mentioned, ask general technical questions
-- Focus on problem-solving, coding practices, and technical thinking
+- Emphasize how they apply technical skills in collaborative environments
 
-**FOR BEHAVIORAL QUESTIONS:**
+**FOR BEHAVIORAL QUESTIONS - HEAVILY PRIORITIZE THESE:**
 - MUST include these 2 required questions:
-  1. "Tell me about a time where you faced a significant challenge in a project. How did you overcome it?"
+  1. "Tell me about a time where you faced a significant challenge. How did you overcome it?"
   2. "Describe a situation where you had to work with a difficult team member or stakeholder. How did you handle it?"
-- For other behavioral questions, only reference specific experiences if clearly mentioned in uploads
-- Otherwise, ask general behavioral questions about teamwork, problem-solving, leadership
+- **COMPANY FIT & VALUES ALIGNMENT (HIGHEST PRIORITY - Include 3-4 of these):**
+  * Why do you want to work at [company name] specifically?
+  * How do your personal values align with our company's mission/values?
+  * What attracts you most about our company culture/work environment?
+  * What unique perspectives and experiences can you bring to our team?
+  * What are you hoping to learn or develop during your time with us?
+  * How does this role fit into your long-term career goals?
+  * What aspects of our company's work/mission excite you most?
+- **ROLE ALIGNMENT & SKILLSET FIT (Include 2-3 of these):**
+  * How do your skills and experiences make you a good fit for this specific role?
+  * What challenges mentioned in the job description are you most excited to tackle?
+  * How do your past experiences prepare you for the responsibilities in this position?
+- **WORK EXPERIENCE & INTERPERSONAL SKILLS (Include 2-3 of these):**
+  * Tell me about your experience at [internship/job]. What did you enjoy most about that role?
+  * Describe a time when you had to learn something completely new. How did you approach it?
+  * Can you share an example of how you've contributed to a team environment?
+- **PROJECTS (MAXIMUM 1 question - focus on collaboration/learning):**
+  * If including any project question, focus on teamwork, learning process, or impact rather than technical implementation
+- **IF ADDITIONAL INFORMATION MENTIONS COMPANY VALUES (e.g., "diverse perspectives"):**
+  * "In our company, we highly value diverse perspectives. What are some unique perspectives and experiences you can bring to us?"
+  * Tailor questions to specific company values or initiatives mentioned
+- **IF JOB DESCRIPTION IS PROVIDED, HEAVILY INTEGRATE**:
+  * Create questions that directly connect candidate background to specific job requirements
+  * Reference specific challenges or responsibilities mentioned in the job posting
+- **IF ADDITIONAL INFORMATION IS PROVIDED**: Incorporate portfolio, certifications, or other relevant details
+- Focus heavily on motivation, cultural fit, interpersonal skills, and professional growth over technical project details
 
 **EXAMPLES OF CORRECT APPROACH:**
 
-✅ GOOD (when resume mentions JavaScript):
-"I see from your resume that you have experience with JavaScript. Can you walk me through your approach to debugging JavaScript applications?"
+✅ EXCELLENT (company fit - highest priority):
+"What specifically attracts you to working at [company name], and how do you see yourself contributing to our mission of [company mission]?"
+
+✅ EXCELLENT (unique perspectives when company values diversity):
+"In our company, we highly value diverse perspectives. What are some unique perspectives and experiences you can bring to us?"
+
+✅ EXCELLENT (role alignment):
+"Looking at this position's focus on [specific job requirement], how do your experiences prepare you to tackle these challenges?"
+
+✅ EXCELLENT (values alignment):
+"Our company values [specific value mentioned]. Can you share an example of how you've demonstrated this value in your academic or professional experience?"
+
+✅ GOOD (work experience focus):
+"Tell me about your internship at [company]. What aspects of that role did you find most fulfilling, and how did it shape your career interests?"
+
+✅ GOOD (interpersonal skills):
+"I noticed you were involved in [club/organization]. Can you tell me about a leadership experience or challenge you faced in that role?"
+
+✅ GOOD (learning motivation):
+"What are you most hoping to learn or develop during your time with our company?"
 
 ✅ GOOD (when no specific tech mentioned):
-"How do you approach learning new programming languages or frameworks?"
+"How do you approach learning new programming languages or frameworks when working in a team environment?"
+
+✅ ACCEPTABLE (project question - if absolutely necessary, focus on collaboration):
+"I see you worked on [project name]. What did you learn about collaboration or problem-solving from that experience?"
+
+❌ WRONG (too many project-focused questions):
+"Tell me about your project architecture... Walk me through your technical implementation... What was the most challenging coding aspect..." (avoid technical project deep-dives)
 
 ❌ WRONG (inventing experience):
 "Given your experience at Google..." (when Google isn't mentioned)
-"Your background in microservices..." (when microservices isn't mentioned)
+
+❌ WRONG (missing company alignment):
+Generating questions without asking about company fit when company information is provided
 
 **OUTPUT FORMAT:**
 Return valid JSON with this structure:
@@ -143,8 +195,7 @@ Return valid JSON with this structure:
       "question": "Question text here",
       "category": "technical", 
       "difficulty": "easy|medium|hard",
-      "tags": ["relevant", "tags"],
-      "context": "Explanation of why this question is relevant"
+      "tags": ["relevant", "tags"]
     }
   ],
   "behavioral": [
@@ -153,8 +204,7 @@ Return valid JSON with this structure:
       "question": "Question text here", 
       "category": "behavioral",
       "difficulty": "easy|medium|hard", 
-      "tags": ["relevant", "tags"],
-      "context": "Explanation of why this question is relevant"
+      "tags": ["relevant", "tags"]
     }
   ]
 }
@@ -163,6 +213,9 @@ Return valid JSON with this structure:
 - Are you referencing any companies/projects/technologies NOT in the uploaded content? → REMOVE THEM
 - Are you assuming experience levels not stated? → USE GENERIC QUESTIONS  
 - Are you inventing details? → STICK TO WHAT'S PROVIDED
+- **If job description was provided, did you create questions that specifically reference job requirements?** → ENSURE INTEGRATION
+- **If additional information was provided, did you incorporate those details into relevant questions?** → ENSURE USAGE
+- Are at least 3-4 questions specifically tailored to connect the candidate's background with the job requirements?
 
 Generate the interview questions now, following these rules strictly:`;
 
@@ -227,118 +280,104 @@ function createFallbackQuestions(resumeContent: string, jobDescContent: string):
   const technical: Question[] = [
     {
       id: 'tech_fallback_1',
-      question: 'Walk me through your approach to debugging a complex issue in a production system. What tools and methodologies do you use?',
-      category: 'technical',
-      difficulty: 'medium',
-      tags: ['debugging', 'production-systems', 'problem-solving'],
-      context: 'Assesses systematic debugging approach and production experience'
-    },
-    {
-      id: 'tech_fallback_2',
-      question: 'How do you ensure code quality and maintainability in your projects? What practices and tools do you implement?',
-      category: 'technical',
-      difficulty: 'medium',
-      tags: ['code-quality', 'best-practices', 'maintainability'],
-      context: 'Evaluates understanding of software engineering best practices'
-    },
-    {
-      id: 'tech_fallback_3',
-      question: 'Describe a time when you had to optimize the performance of an application or system. What was your approach and what results did you achieve?',
-      category: 'technical',
-      difficulty: 'medium',
-      tags: ['performance-optimization', 'system-design', 'metrics'],
-      context: 'Tests performance optimization skills and results-oriented thinking'
-    },
-    {
-      id: 'tech_fallback_4',
       question: 'How do you approach learning and staying current with new technologies in your field? Can you give me an example?',
       category: 'technical',
       difficulty: 'easy',
-      tags: ['learning', 'technology-trends', 'professional-development'],
-      context: 'Assesses commitment to continuous learning and technology adoption'
+      tags: ['learning', 'technology-trends', 'professional-development']
     },
     {
-      id: 'tech_fallback_5',
-      question: 'Explain how you would design a system to handle a significant increase in user traffic. What factors would you consider?',
+      id: 'tech_fallback_2',
+      question: 'Walk me through your approach to debugging a complex issue. What tools and methodologies do you use?',
       category: 'technical',
-      difficulty: 'hard',
-      tags: ['system-design', 'scalability', 'architecture'],
-      context: 'Tests system design thinking and scalability considerations'
+      difficulty: 'medium',
+      tags: ['debugging', 'problem-solving', 'tools']
     },
     {
-      id: 'tech_fallback_6',
+      id: 'tech_fallback_3',
+      question: 'How do you ensure code quality and maintainability when working on a team? What practices do you follow?',
+      category: 'technical',
+      difficulty: 'medium',
+      tags: ['code-quality', 'best-practices', 'teamwork']
+    },
+    {
+      id: 'tech_fallback_4',
       question: 'Tell me about a technical decision you made that you later regretted. What did you learn from it?',
       category: 'technical',
       difficulty: 'medium',
-      tags: ['decision-making', 'learning', 'retrospection'],
-      context: 'Evaluates learning from experience and technical judgment evolution'
+      tags: ['decision-making', 'learning', 'growth']
     },
     {
-      id: 'tech_fallback_7',
+      id: 'tech_fallback_5',
       question: 'How do you approach code reviews? What do you look for when reviewing others\' code?',
       category: 'technical',
       difficulty: 'easy',
-      tags: ['code-review', 'collaboration', 'quality-assurance'],
-      context: 'Assesses collaborative development practices and quality standards'
+      tags: ['code-review', 'collaboration', 'quality-assurance']
     },
     {
-      id: 'tech_fallback_8',
+      id: 'tech_fallback_6',
       question: 'Describe your experience with testing. How do you decide what to test and what testing strategies do you employ?',
       category: 'technical',
       difficulty: 'medium',
-      tags: ['testing', 'quality-assurance', 'strategy'],
-      context: 'Evaluates testing mindset and quality assurance practices'
+      tags: ['testing', 'quality-assurance', 'strategy']
     }
   ];
 
   const behavioral: Question[] = [
     {
       id: 'behav_fallback_1',
-      question: 'Tell me about a time where you faced a significant challenge in a project. How did you overcome it?',
+      question: 'Tell me about a time where you faced a significant challenge. How did you overcome it?',
       category: 'behavioral',
       difficulty: 'medium',
-      tags: ['problem-solving', 'resilience', 'challenge'],
-      context: 'Essential behavioral question to assess problem-solving abilities and resilience under pressure'
+      tags: ['problem-solving', 'resilience', 'challenge']
     },
     {
       id: 'behav_fallback_2',
       question: 'Describe a situation where you had to work with a difficult team member or stakeholder. How did you handle it?',
       category: 'behavioral',
       difficulty: 'medium',
-      tags: ['teamwork', 'conflict-resolution', 'communication'],
-      context: 'Evaluates interpersonal skills and conflict resolution abilities'
+      tags: ['teamwork', 'conflict-resolution', 'communication']
     },
     {
       id: 'behav_fallback_3',
-      question: 'Tell me about a project you led or contributed to significantly. What was your role and how did you ensure its success?',
+      question: 'What attracts you most to this role and this company? How does it align with your career goals?',
       category: 'behavioral',
-      difficulty: 'medium',
-      tags: ['leadership', 'project-management', 'accountability'],
-      context: 'Assesses leadership capabilities and project management skills'
+      difficulty: 'easy',
+      tags: ['company-fit', 'motivation', 'career-alignment']
     },
     {
       id: 'behav_fallback_4',
-      question: 'Describe a time when you had to learn a new technology or skill quickly to complete a project. How did you approach it?',
+      question: 'What values are most important to you in a workplace, and how do you demonstrate those values in your work?',
       category: 'behavioral',
-      difficulty: 'easy',
-      tags: ['learning', 'adaptability', 'self-development'],
-      context: 'Evaluates learning agility and adaptability to new technologies'
+      difficulty: 'medium',
+      tags: ['values', 'workplace-culture', 'personal-principles']
     },
     {
       id: 'behav_fallback_5',
-      question: 'Tell me about a time when you disagreed with a technical decision made by your team or manager. How did you handle it?',
+      question: 'What unique perspectives and experiences can you bring to our team?',
       category: 'behavioral',
       difficulty: 'medium',
-      tags: ['communication', 'technical-judgment', 'professional-growth'],
-      context: 'Tests professional communication and technical decision-making skills'
+      tags: ['diversity', 'unique-perspective', 'value-add']
     },
     {
       id: 'behav_fallback_6',
-      question: 'What motivates you in your work, and how do you stay motivated during challenging or repetitive tasks?',
+      question: 'What are you hoping to learn and develop during your time with our company?',
       category: 'behavioral',
       difficulty: 'easy',
-      tags: ['motivation', 'resilience', 'self-awareness'],
-      context: 'Understands personal motivation and long-term engagement potential'
+      tags: ['learning-goals', 'professional-development', 'growth']
+    },
+    {
+      id: 'behav_fallback_7',
+      question: 'Describe a time when you participated in a club, organization, or extracurricular activity. What role did you play and what did you learn?',
+      category: 'behavioral',
+      difficulty: 'easy',
+      tags: ['extracurricular', 'leadership', 'teamwork', 'personal-growth']
+    },
+    {
+      id: 'behav_fallback_8',
+      question: 'Tell me about an internship or work experience you\'ve had. What did you enjoy most about that role and what did you learn?',
+      category: 'behavioral',
+      difficulty: 'easy',
+      tags: ['work-experience', 'learning', 'professional-growth', 'reflection']
     }
   ];
 

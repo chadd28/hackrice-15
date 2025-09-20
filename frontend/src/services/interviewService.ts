@@ -107,8 +107,13 @@ class InterviewService {
         throw new Error('Text content cannot be empty');
       }
 
-      if (text.length > 10000) {
-        throw new Error('Text content is too long (max 10,000 characters)');
+      // Set character limits based on content type
+      const isResume = type === 'resume';
+      const maxLength = isResume ? 10000 : 20000;
+      const limitDescription = isResume ? '10,000' : '20,000';
+
+      if (text.length > maxLength) {
+        throw new Error(`Text content is too long (max ${limitDescription} characters)`);
       }
 
       const response = await fetch(`${API_BASE_URL}/api/interview/upload/text`, {

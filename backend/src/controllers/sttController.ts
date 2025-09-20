@@ -46,9 +46,7 @@ export const transcribeAudio = async (req: Request, res: Response) => {
       }
     }
 
-    console.log("Processing STT request with filtered config:", validGoogleConfig);
     if (userConfig.enableSpeakerDiarization !== undefined) {
-      console.log("Note: enableSpeakerDiarization is not supported in basic STT API, ignoring");
     }
 
     // Prepare request body for Google Speech-to-Text API
@@ -68,7 +66,6 @@ export const transcribeAudio = async (req: Request, res: Response) => {
       }
     );
 
-    console.log("STT API response status:", response.status);
 
     const data = response.data;
 
@@ -90,8 +87,6 @@ export const transcribeAudio = async (req: Request, res: Response) => {
         ? confidences.reduce((sum: number, conf: number) => sum + conf, 0) / confidences.length 
         : 0;
 
-      console.log("Transcription successful:", fullTranscript.substring(0, 100) + "...");
-      console.log("Combined", data.results.length, "result(s) into full transcript");
 
       res.json({
         message: "Transcription successful",
@@ -100,7 +95,6 @@ export const transcribeAudio = async (req: Request, res: Response) => {
         results: data.results
       });
     } else {
-      console.log("No speech detected in audio");
       res.json({
         message: "No speech detected",
         transcript: "",

@@ -55,7 +55,6 @@ export const register = async (req: Request, res: Response) => {
     if (profileError) {
       console.error('Profile creation error:', profileError);
       // Don't fail the registration if profile creation fails
-      console.log('Profile creation failed, but user was created successfully');
     }
 
     res.status(201).json({

@@ -35,7 +35,6 @@ export interface Question {
   category: 'technical' | 'behavioral';
   difficulty: 'easy' | 'medium' | 'hard';
   tags: string[]; // e.g., ['react', 'frontend'], ['leadership', 'teamwork']
-  context?: string; // Additional context about why this question was generated
 }
 
 export interface InterviewSession {
