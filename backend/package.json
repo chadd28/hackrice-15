@@ -12,9 +12,10 @@
   },
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.3.0",
+    "@supabase/supabase-js": "^2.57.4",
     "axios": "^1.12.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "fs": "^0.0.1-security",
     "util": "^0.12.5"

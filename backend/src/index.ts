@@ -1,10 +1,13 @@
+// Load environment variables FIRST
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import ttsRoutes from './routes/ttsRoutes';
 
-// Load environment variables
-dotenv.config();
+// Load routes
+import ttsRoutes from './routes/ttsRoutes';
+import authRoutes from './routes/authRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,6 +18,8 @@ app.use(express.json());
 
 // Routes
 app.use('/api/tts', ttsRoutes);
+app.use('/api/auth', authRoutes);
+
 
 // Basic route
 app.get('/', (req, res) => {
