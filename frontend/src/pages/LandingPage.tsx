@@ -30,14 +30,14 @@ function LandingPage(): React.ReactElement {
         >
           <div className="flex items-center gap-3">
             <motion.div 
-              className="w-10 h-10 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 rounded-lg flex items-center justify-center"
+              className="w-10 h-10 flex items-center justify-center"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              <Brain className="w-6 h-6 text-white" />
+              <img src="/Prepr_logo.png" alt="Prepr Logo" className="w-10 h-10 object-contain" />
             </motion.div>
-            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-              Pitch AI Interviewer
+            <h1 className="text-2xl font-bold text-slate-100">
+              Prepr
             </h1>
           </div>
           <div className="hidden md:flex gap-6 items-center">
@@ -69,19 +69,29 @@ function LandingPage(): React.ReactElement {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
+            <motion.div 
+              className="inline-block mb-4"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <span className="text-lg md:text-xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                Introducing Prepr:
+              </span>
+            </motion.div>
             <h2 className="text-5xl md:text-6xl font-bold leading-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300">
-              Master Your Interview Skills with AI
+              Master Every Interview with AI-Powered Practice
             </h2>
             <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto">
-              Practice behavioral interviews with our AI-powered platform. Get instant feedback, 
-              improve your responses, and land your dream job with confidence.
+              Upload your resume, get tailored technical and behavioral questions, and receive instant AI feedback. 
+              Transform your interview skills and land your dream job with confidence.
             </p>
             <div className="flex justify-center">
               <DarkGlowButton 
                 to="/register" 
-                text="Start Behavioral Practice" 
+                text="Start Your AI Interview" 
                 icon={<Mic className="w-5 h-5" />}
-                width="280px"
+                width="300px"
               />
             </div>
           </motion.div>
@@ -98,30 +108,30 @@ function LandingPage(): React.ReactElement {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300">
-            Comprehensive Behavioral Interview Training
+            Complete Interview Simulation Platform
           </h2>
           <p className="text-lg text-slate-300 max-w-2xl mx-auto">
-            Our AI-powered platform provides realistic behavioral interview simulations with professional feedback.
+            Our AI-powered platform provides realistic full interview experiences with resume-tailored behavioral questions and technical assessments.
           </p>
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
           <FeatureCard 
             icon={<Mic className="w-6 h-6" />}
-            title="Voice Practice"
-            description="Practice behavioral questions with AI-generated scenarios. Record your responses and get detailed feedback on communication and clarity."
+            title="Resume-Tailored Questions"
+            description="Upload your resume and get personalized behavioral questions based on your experience. Practice with realistic scenarios tailored to your background."
             delay={0.1}
           />
           <FeatureCard 
             icon={<Brain className="w-6 h-6" />}
-            title="AI-Powered Feedback"
-            description="Advanced semantic analysis compares your responses against curated ideal answers for precise, actionable feedback."
+            title="Technical Assessment"
+            description="Answer technical questions relevant to your target role. Get evaluated using semantic analysis and keyword matching against curated ideal answers."
             delay={0.2}
           />
           <FeatureCard 
             icon={<Users className="w-6 h-6" />}
-            title="Professional Voice"
-            description="Questions are read aloud using Google Cloud's natural WaveNet voices for a realistic interview experience."
+            title="AI-Powered Feedback"
+            description="Receive detailed feedback on both behavioral and technical responses with actionable suggestions for improvement and overall scoring."
             delay={0.3}
           />
         </div>
@@ -140,33 +150,33 @@ function LandingPage(): React.ReactElement {
             How It Works
           </h2>
           <p className="text-lg text-slate-300 max-w-2xl mx-auto">
-            Simple, effective, and AI-driven interview practice in just a few steps.
+            Complete 4-question interview simulation: 2 behavioral + 2 technical questions tailored to your profile.
           </p>
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
           <WorkflowStep 
             number="1"
-            title="Select Practice Session"
-            description="Choose from various behavioral interview scenarios and question types tailored to your industry."
+            title="Upload & Setup"
+            description="Upload your resume and specify your target job position. Optionally add job posting URL or company details for tailored questions."
             delay={0.1}
           />
           <WorkflowStep 
             number="2"
-            title="Listen & Respond"
-            description="AI reads behavioral questions aloud with natural voice. Record your verbal response and share your experiences."
+            title="AI Question Generation"
+            description="Our AI generates 2 behavioral questions from your resume and 2 technical questions relevant to your target role using web scraping."
             delay={0.2}
           />
           <WorkflowStep 
             number="3"
-            title="AI Analysis"
-            description="Our AI evaluates your response using semantic matching against ideal behavioral answer patterns."
+            title="Complete Interview"
+            description="Answer behavioral questions via voice recording and technical questions via text. Experience realistic interview conditions."
             delay={0.3}
           />
           <WorkflowStep 
             number="4"
-            title="Get Feedback"
-            description="Receive detailed feedback on communication skills, answer structure, and specific improvement suggestions."
+            title="Get Comprehensive Feedback"
+            description="Receive detailed AI evaluation for all responses with scores, strengths, weaknesses, and actionable improvement suggestions."
             delay={0.4}
           />
         </div>
@@ -186,15 +196,15 @@ function LandingPage(): React.ReactElement {
               Ready to Ace Your Next Interview?
             </h2>
             <p className="text-lg mb-8 text-slate-300">
-              Join thousands of job seekers who have improved their behavioral interview skills with our AI-powered platform. 
-              Start practicing today and land your dream job with confidence.
+              Join job seekers who have improved their interview skills with our comprehensive AI-powered platform. 
+              Practice both behavioral and technical questions tailored to your profile and target role.
             </p>
             <div className="flex justify-center">
               <DarkGlowButton 
                 to="/register" 
-                text="Start Behavioral Practice" 
+                text="Begin Your AI Interview" 
                 icon={<Play className="w-5 h-5" />}
-                width="280px"
+                width="300px"
               />
             </div>
           </div>
@@ -206,13 +216,13 @@ function LandingPage(): React.ReactElement {
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                <Brain className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 flex items-center justify-center">
+                <img src="/Prepr_logo.png" alt="Prepr Logo" className="w-8 h-8 object-contain" />
               </div>
-              <h3 className="text-xl font-bold">Pitch AI Interviewer</h3>
+              <h3 className="text-xl font-bold">Prepr</h3>
             </div>
             <p className="text-slate-400 text-center md:text-right">
-              © {new Date().getFullYear()} Pitch AI Interviewer. Built for HackRice 15.
+              © {new Date().getFullYear()} Prepr. Built for HackRice 15.
             </p>
           </div>
         </div>

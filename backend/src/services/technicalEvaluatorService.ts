@@ -418,6 +418,68 @@ Example format:
   }
 
   /**
+   * Generate AI-powered detailed feedback using Gemini
+   */
+  private async generateAIFeedback(
+    userAnswer: string,
+    question: TechnicalQuestionWithEmbedding,
+    combinedScore: number,
+    semanticSimilarity: number,
+    keywordMatches: string[]
+  ): Promise<string> {
+    try {
+      const model = this.geminiClient.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      
+      const prompt = `
+You are an expert technical interviewer providing detailed feedback on a candidate's answer.
+
+QUESTION: ${question.question}
+REFERENCE ANSWER: ${question.reference_answer}
+USER'S ANSWER: ${userAnswer}
+SIMILARITY SCORE: ${(semanticSimilarity * 100).toFixed(1)}%
+OVERALL SCORE: ${(combinedScore * 100).toFixed(1)}%
+KEYWORDS FOUND: ${keywordMatches.join(', ') || 'None'}
+MISSING KEYWORDS: ${question.keywords.filter(k => !keywordMatches.includes(k)).join(', ') || 'None'}
+
+Please provide detailed feedback on this answer. Your feedback should:
+1. Start with an emoji and clear assessment (e.g., "🎯 Fully correct", "✅ Mostly correct", "⚠️ Partially correct", "❌ Incorrect", "📚 Missing key elements")
+2. Explain what the candidate did well (if anything)
+3. Identify what's missing or incorrect
+4. Be constructive and encouraging
+5. Be 1-2 sentences maximum
+
+IMPORTANT: Return ONLY the feedback text. Do NOT wrap in quotes or add any other formatting.
+
+Examples:
+- "🎯 Fully correct! You demonstrate excellent understanding of the concept and covered all key points with clear explanations."
+- "✅ Mostly correct! You understood the main concept but missed some important details about error handling."
+- "⚠️ Partially correct. You touched on relevant concepts but missed key elements like performance considerations and best practices."
+- "❌ Incorrect approach. Your answer focuses on a different concept and doesn't address the core question about data structures."
+- "📚 Missing key elements. While you mentioned the basics, you didn't explain the implementation details or use cases."`;
+
+      const result = await model.generateContent(prompt);
+      const feedback = result.response.text().trim();
+      
+      console.log('🤖 Generated AI feedback:', feedback);
+      return feedback;
+      
+    } catch (error) {
+      console.error('❌ Error generating AI feedback:', error);
+      
+      // Fallback to score-based feedback if AI fails
+      if (combinedScore >= 0.85) {
+        return '🎯 Excellent answer! You demonstrate a strong understanding of the concept with clear explanations.';
+      } else if (combinedScore >= 0.70) {
+        return '👍 Good answer! You covered the main concepts well but could add more detail or clarity.';
+      } else if (combinedScore >= 0.50) {
+        return '⚠️ Partially correct. Your answer touches on relevant concepts but misses key details.';
+      } else {
+        return '❌ The answer appears to be off-topic or missing key concepts. Please review the question carefully.';
+      }
+    }
+  }
+
+  /**
    * Generate detailed feedback based on evaluation results
    */
   private async generateFeedback(
@@ -428,22 +490,17 @@ Example format:
     question: TechnicalQuestionWithEmbedding,
     userAnswer: string
   ): Promise<{ feedback: string, isCorrect: boolean, suggestions: string[] }> {
-    let feedback: string;
-    let isCorrect: boolean;
+    // Generate AI-powered detailed feedback
+    const feedback = await this.generateAIFeedback(
+      userAnswer,
+      question,
+      combinedScore,
+      semanticSimilarity,
+      keywordScore.matches
+    );
 
-    if (combinedScore >= config.excellentThreshold) {
-      feedback = '🎯 Excellent answer! You demonstrate a strong understanding of the concept with clear explanations.';
-      isCorrect = true;
-    } else if (combinedScore >= config.goodThreshold) {
-      feedback = '👍 Good answer! You covered the main concepts well but could add more detail or clarity.';
-      isCorrect = true;
-    } else if (combinedScore >= config.partialThreshold) {
-      feedback = '⚠️ Partially correct. Your answer touches on relevant concepts but misses key details.';
-      isCorrect = false;
-    } else {
-      feedback = '❌ The answer appears to be off-topic or missing key concepts. Please review the question carefully.';
-      isCorrect = false;
-    }
+    // Determine correctness based on score thresholds
+    const isCorrect = combinedScore >= config.goodThreshold;
 
     // Generate AI-powered suggestions
     const suggestions = await this.generateAISuggestions(
