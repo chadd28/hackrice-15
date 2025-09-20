@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, LogOut, MessageSquare, BarChart3, Briefcase } from 'lucide-react';
+import { User, LogOut, MessageSquare, BarChart3, FileText, Briefcase, Star } from 'lucide-react';
 import { authService } from '../services/authService';
 
 function DashboardPage(): React.ReactElement {
@@ -46,8 +46,8 @@ function DashboardPage(): React.ReactElement {
       <header className="bg-slate-800/50 border-b border-slate-700 p-6">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-              Pitch AI Interviewer
+            <h1 className="text-2xl font-bold text-white">
+              Prepr
             </h1>
             <p className="text-slate-300 mt-1">Welcome back, {user.firstName || user.name}!</p>
           </div>
@@ -137,30 +137,52 @@ function DashboardPage(): React.ReactElement {
               <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                 <BarChart3 className="w-8 h-8 text-white" />
               </div>
-              <div>
+              <div className="w-full text-center">
                 <h2 className="text-2xl font-semibold text-white">AI Interview Simulator</h2>
                 <p className="text-slate-300">Upload your info and get personalized technical & behavioral questions</p>
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-400 mb-1">📄</div>
-                <div className="text-sm text-slate-300">Resume</div>
+            
+              <div className="flex flex-col items-center gap-6 mb-6">
+                <div className="flex items-center gap-4 w-full max-w-5xl md:gap-6 md:items-stretch">
+                  <div className="flex-1 bg-slate-700/50 rounded-lg p-6 flex flex-col items-center justify-center text-center">
+                    <FileText className="w-8 h-8 text-blue-400 mb-3" />
+                    <div className="text-lg font-semibold text-white">Resume & Experience</div>
+                    <div className="text-sm text-slate-300 mt-2">Upload your resume or paste experience/skills</div>
+                  </div>
+
+                  <div className="hidden md:flex items-center justify-center text-4xl text-slate-400 font-bold">+</div>
+
+                  <div className="flex-1 bg-slate-700/50 rounded-lg p-6 flex flex-col items-center justify-center text-center">
+                    <Briefcase className="w-8 h-8 text-green-400 mb-3" />
+                    <div className="text-lg font-semibold text-white">Job Description</div>
+                <div className="text-sm text-slate-300 mt-2">Paste job details, select a role, or add a link to the job posting</div>                  </div>
+
+                  <div className="hidden md:flex items-center justify-center text-4xl text-slate-400 font-bold">=</div>
+
+                  <div className="flex-1 bg-gradient-to-r from-purple-600 to-pink-500 rounded-lg p-6 flex flex-col items-center justify-center text-center shadow-lg">
+                    <Star className="w-8 h-8 text-white mb-3" />
+                    <div className="text-lg font-semibold text-white">Personalized Questions</div>
+                    <div className="text-sm text-white/90 mt-2">Tech & behavioral questions tailored to your resume and the job</div>
+                  </div>
+                </div>
+
+                {/* compact mobile row for the equation */}
+                <div className="md:hidden w-full max-w-3xl flex items-center justify-between gap-3">
+                  <div className="flex-1 bg-slate-700/50 rounded-lg p-3 text-center">
+                    <div className="text-sm font-semibold text-white">Resume</div>
+                  </div>
+                  <div className="text-2xl text-slate-400 font-bold">+</div>
+                  <div className="flex-1 bg-slate-700/50 rounded-lg p-3 text-center">
+                    <div className="text-sm font-semibold text-white">Job</div>
+                  </div>
+                  <div className="text-2xl text-slate-400 font-bold">=</div>
+                  <div className="flex-1 bg-gradient-to-r from-purple-600 to-pink-500 rounded-lg p-3 text-center text-white">
+                    <div className="text-sm font-semibold">Personalized Qs</div>
+                  </div>
+                </div>
               </div>
-              <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                <div className="text-2xl font-bold text-green-400 mb-1">💼</div>
-                <div className="text-sm text-slate-300">Job Info</div>
-              </div>
-              <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-400 mb-1">🤖</div>
-                <div className="text-sm text-slate-300">AI Generated</div>
-              </div>
-              <div className="text-center p-4 bg-slate-700/50 rounded-lg">
-                <div className="text-2xl font-bold text-pink-400 mb-1">⭐</div>
-                <div className="text-sm text-slate-300">Personalized</div>
-              </div>
-            </div>
 
             <button 
               onClick={() => window.location.href = '/interview/setup'}
