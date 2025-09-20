@@ -1,6 +1,7 @@
-import { getCohereService, CohereEmbeddingService } from './cohereEmbeddingService';
-import { getEmbeddingCache, EmbeddingCache } from './embeddingCache';
-import technicalQuestions from '../data/technicalQuestions.json';
+import { getCohereService, CohereEmbeddingService } from './cohereEmbeddingService.js';
+import { getEmbeddingCache, EmbeddingCache } from './embeddingCache.js';
+import technicalQuestions from '../data/technicalQuestions.json' assert { type: 'json' };
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 /**
  * Technical question with embedding data
@@ -47,6 +48,7 @@ export class TechnicalQuestionEvaluator {
   private embeddingCache: EmbeddingCache;
   private questionsWithEmbeddings: Map<number, TechnicalQuestionWithEmbedding> = new Map();
   private isInitialized: boolean = false;
+  private geminiClient: GoogleGenerativeAI;
   private readonly defaultConfig: EvaluationConfig = {
     excellentThreshold: 0.85,
     goodThreshold: 0.70,
@@ -58,6 +60,13 @@ export class TechnicalQuestionEvaluator {
   constructor() {
     this.cohereService = getCohereService();
     this.embeddingCache = getEmbeddingCache();
+    
+    // Initialize Gemini client
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY environment variable is required');
+    }
+    this.geminiClient = new GoogleGenerativeAI(apiKey);
   }
 
   /**
@@ -245,7 +254,7 @@ export class TechnicalQuestionEvaluator {
       return {
         questionId,
         similarity: 0,
-        score: 0,
+        score: 1, // Minimum score on 1-10 scale
         feedback: 'Answer is too short. Please provide a more detailed explanation with at least a few sentences.',
         isCorrect: false,
         keywordMatches: [],
@@ -282,16 +291,17 @@ export class TechnicalQuestionEvaluator {
         keywordScore.score * evaluationConfig.keywordWeight
       );
 
-      // Convert to 0-100 score
-      const finalScore = Math.round(combinedScore * 100);
+      // Convert to 1-10 score
+      const finalScore = Math.max(1, Math.min(10, Math.round(combinedScore * 9) + 1));
 
       // Generate feedback and determine correctness
-      const { feedback, isCorrect, suggestions } = this.generateFeedback(
+      const { feedback, isCorrect, suggestions } = await this.generateFeedback(
         combinedScore,
         semanticSimilarity,
         keywordScore,
         evaluationConfig,
-        question
+        question,
+        userAnswer
       );
 
       console.log(`📊 Question ${questionId} evaluation: semantic=${semanticSimilarity.toFixed(3)}, keyword=${keywordScore.score.toFixed(3)}, final=${finalScore}`);
@@ -333,63 +343,115 @@ export class TechnicalQuestionEvaluator {
     return { score, matches };
   }
 
+
+
+  /**
+   * Generate AI-powered suggestions using Gemini
+   */
+  private async generateAISuggestions(
+    userAnswer: string,
+    question: TechnicalQuestionWithEmbedding,
+    combinedScore: number,
+    keywordMatches: string[]
+  ): Promise<string[]> {
+    try {
+      const model = this.geminiClient.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      
+      const prompt = `
+You are an expert technical interviewer providing constructive feedback. 
+
+QUESTION: ${question.question}
+REFERENCE ANSWER: ${question.reference_answer}
+USER'S ANSWER: ${userAnswer}
+SCORE: ${(combinedScore * 100).toFixed(1)}%
+KEYWORDS FOUND: ${keywordMatches.join(', ') || 'None'}
+MISSING KEYWORDS: ${question.keywords.filter(k => !keywordMatches.includes(k)).join(', ') || 'None'}
+
+Please provide 1-2 specific, actionable suggestions to improve this answer. Focus on:
+- Technical accuracy and completeness
+- Missing key concepts or terminology
+- Areas for more detailed explanation
+- Better structure or clarity
+
+IMPORTANT: Return ONLY a valid JSON array of strings. Do NOT wrap in markdown code blocks or add any other text.
+Each suggestion should be concise (max 50 words) and actionable.
+
+Example format:
+["Add more details about X concept", "Explain the relationship between Y and Z", "Include practical examples"]`;
+
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text().trim();
+      
+      console.log('🤖 Gemini raw response:', responseText);
+      
+      // Clean the response - remove markdown code blocks if present
+      let cleanedResponse = responseText;
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      console.log('🧹 Cleaned response:', cleanedResponse);
+      
+      // Parse the JSON response
+      const suggestions = JSON.parse(cleanedResponse);
+      
+      // Validate that it's an array of strings
+      if (!Array.isArray(suggestions) || !suggestions.every(s => typeof s === 'string')) {
+        throw new Error('Invalid response format from Gemini');
+      }
+      
+      return suggestions.slice(0, 4); // Limit to 4 suggestions max
+      
+    } catch (error) {
+      console.error('❌ Error generating AI suggestions:', error);
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      // Fallback to a basic suggestion
+      return ['Consider providing more detailed explanation of the key concepts'];
+    }
+  }
+
   /**
    * Generate detailed feedback based on evaluation results
    */
-  private generateFeedback(
+  private async generateFeedback(
     combinedScore: number,
     semanticSimilarity: number,
     keywordScore: { score: number, matches: string[] },
     config: EvaluationConfig,
-    question: TechnicalQuestionWithEmbedding
-  ): { feedback: string, isCorrect: boolean, suggestions: string[] } {
-    const suggestions: string[] = [];
+    question: TechnicalQuestionWithEmbedding,
+    userAnswer: string
+  ): Promise<{ feedback: string, isCorrect: boolean, suggestions: string[] }> {
     let feedback: string;
     let isCorrect: boolean;
 
     if (combinedScore >= config.excellentThreshold) {
       feedback = '🎯 Excellent answer! You demonstrate a strong understanding of the concept with clear explanations.';
       isCorrect = true;
-      
-      if (keywordScore.matches.length < question.keywords.length) {
-        suggestions.push('Consider mentioning these key terms: ' + 
-          question.keywords.filter(k => !keywordScore.matches.includes(k)).join(', '));
-      }
-      
     } else if (combinedScore >= config.goodThreshold) {
       feedback = '👍 Good answer! You covered the main concepts well but could add more detail or clarity.';
       isCorrect = true;
-      
-      suggestions.push('Expand on your explanation with more specific details');
-      if (keywordScore.score < 0.5) {
-        suggestions.push('Include these important concepts: ' + question.keywords.slice(0, 3).join(', '));
-      }
-      
     } else if (combinedScore >= config.partialThreshold) {
       feedback = '⚠️ Partially correct. Your answer touches on relevant concepts but misses key details.';
       isCorrect = false;
-      
-      suggestions.push('Review the core concepts and provide more comprehensive explanation');
-      suggestions.push('Include these key terms: ' + question.keywords.slice(0, 3).join(', '));
-      if (semanticSimilarity < 0.4) {
-        suggestions.push('Your answer may be addressing a different aspect of the question');
-      }
-      
     } else {
       feedback = '❌ The answer appears to be off-topic or missing key concepts. Please review the question carefully.';
       isCorrect = false;
-      
-      suggestions.push('Read the question carefully and focus on the main concept being asked');
-      suggestions.push('Key concepts to address: ' + question.keywords.slice(0, 5).join(', '));
-      suggestions.push('Consider reviewing the fundamentals of this topic');
     }
 
-    // Add specific suggestions based on semantic vs keyword performance
-    if (semanticSimilarity > 0.7 && keywordScore.score < 0.3) {
-      suggestions.push('Your explanation is conceptually sound but could benefit from using more technical terminology');
-    } else if (semanticSimilarity < 0.5 && keywordScore.score > 0.5) {
-      suggestions.push('You mentioned relevant keywords but the overall explanation needs better structure and clarity');
-    }
+    // Generate AI-powered suggestions
+    const suggestions = await this.generateAISuggestions(
+      userAnswer,
+      question,
+      combinedScore,
+      keywordScore.matches
+    );
 
     return { feedback, isCorrect, suggestions };
   }
@@ -413,7 +475,7 @@ export class TechnicalQuestionEvaluator {
         results.push({
           questionId: item.questionId,
           similarity: 0,
-          score: 0,
+          score: 1, // Minimum score on 1-10 scale
           feedback: 'Evaluation failed due to technical error',
           isCorrect: false,
           keywordMatches: [],

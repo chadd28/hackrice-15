@@ -224,12 +224,12 @@ function TechnicalQuestionTestPage(): React.ReactElement {
   };
 
   /**
-   * Get score color and emoji
+   * Get score color and emoji (updated for 1-10 scale)
    */
   const getScoreDisplay = (score: number) => {
-    if (score >= 85) return { color: 'text-green-400', emoji: '🎉', label: 'Excellent!' };
-    if (score >= 70) return { color: 'text-blue-400', emoji: '✅', label: 'Good' };
-    if (score >= 50) return { color: 'text-yellow-400', emoji: '⚠️', label: 'Partial' };
+    if (score >= 8.5) return { color: 'text-green-400', emoji: '🎉', label: 'Excellent!' };
+    if (score >= 7) return { color: 'text-blue-400', emoji: '✅', label: 'Good' };
+    if (score >= 5) return { color: 'text-yellow-400', emoji: '⚠️', label: 'Partial' };
     return { color: 'text-red-400', emoji: '❌', label: 'Needs Improvement' };
   };
 
@@ -443,7 +443,7 @@ function TechnicalQuestionTestPage(): React.ReactElement {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-slate-700 rounded-lg p-4 text-center">
                   <div className={`text-2xl font-bold ${getScoreDisplay(evaluation.score).color}`}>
-                    {evaluation.score}/100
+                    {evaluation.score}/10
                   </div>
                   <div className="text-sm text-slate-400">Overall Score</div>
                 </div>

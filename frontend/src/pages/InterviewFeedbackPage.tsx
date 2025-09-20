@@ -1,17 +1,30 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, CheckCircle, Target, Lightbulb, User } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Target, Lightbulb, User, Brain, Star } from 'lucide-react';
+
+interface BehavioralFeedback {
+  score?: number;
+  strengths?: string;
+  suggestions?: string;
+}
+
+interface TechnicalFeedback {
+  questionId: number;
+  similarity: number;
+  score: number;
+  feedback: string;
+  isCorrect: boolean;
+  keywordMatches: string[];
+  suggestions: string[];
+}
 
 interface FeedbackData {
   questionIndex: number;
   question: string;
   answer: string;
-  feedback: {
-    score?: number;
-    strengths?: string;
-    suggestions?: string;
-  } | null;
+  feedback: BehavioralFeedback | TechnicalFeedback | null;
+  questionType: 'behavioral' | 'technical';
 }
 
 interface InterviewResults {
@@ -42,19 +55,43 @@ function InterviewFeedbackPage(): React.ReactElement {
     return <div></div>;
   }
 
-  const { duration, questionsAnswered, totalQuestions, feedbackData, completedAt } = results;
+  const { duration, feedbackData, completedAt } = results;
   
   // Debug: Log specific feedback data
   console.log('📋 Feedback data array:', feedbackData);
   console.log('📊 Number of feedback items:', feedbackData?.length || 0);
 
-  // Calculate average score
+  // Calculate average score - handle both behavioral and technical feedback
   const validScores = (feedbackData || [])
-    .map(item => item.feedback?.score)
+    .map(item => {
+      if (!item.feedback) return null;
+      if (item.questionType === 'behavioral') {
+        return (item.feedback as BehavioralFeedback).score;
+      } else {
+        return (item.feedback as TechnicalFeedback).score;
+      }
+    })
     .filter((score): score is number => typeof score === 'number');
+  
   const averageScore = validScores.length > 0 
     ? Math.round(validScores.reduce((sum, score) => sum + score, 0) / validScores.length * 10) / 10
     : null;
+
+  // Get score display helper - handles both 1-10 (technical) and behavioral scores
+  const getScoreDisplay = (score: number) => {
+    // For technical questions (1-10 scale)
+    if (score <= 10) {
+      if (score >= 8.5) return { color: 'text-green-400', emoji: '🎉', label: 'Excellent!' };
+      if (score >= 7) return { color: 'text-blue-400', emoji: '✅', label: 'Good' };
+      if (score >= 5) return { color: 'text-yellow-400', emoji: '⚠️', label: 'Partial' };
+      return { color: 'text-red-400', emoji: '❌', label: 'Needs Improvement' };
+    }
+    // For behavioral questions (0-100 scale, but typically displayed as x/10)
+    if (score >= 85) return { color: 'text-green-400', emoji: '🎉', label: 'Excellent!' };
+    if (score >= 70) return { color: 'text-blue-400', emoji: '✅', label: 'Good' };
+    if (score >= 50) return { color: 'text-yellow-400', emoji: '⚠️', label: 'Partial' };
+    return { color: 'text-red-400', emoji: '❌', label: 'Needs Improvement' };
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 font-sans text-white">
@@ -94,7 +131,7 @@ function InterviewFeedbackPage(): React.ReactElement {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">Interview Complete!</h2>
-              <p className="text-slate-400">Behavioral Interview Session</p>
+              <p className="text-slate-400">Mock Interview Session</p>
             </div>
           </div>
 
@@ -132,9 +169,18 @@ function InterviewFeedbackPage(): React.ReactElement {
                   <span className="text-white font-bold text-sm">{item.questionIndex + 1}</span>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    Question {item.questionIndex + 1}
-                  </h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg font-semibold text-white">
+                      Question {item.questionIndex + 1}
+                    </h3>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      item.questionType === 'behavioral' 
+                        ? 'bg-blue-500/20 text-blue-300' 
+                        : 'bg-purple-500/20 text-purple-300'
+                    }`}>
+                      {item.questionType === 'behavioral' ? 'Behavioral' : 'Technical'}
+                    </span>
+                  </div>
                   <p className="text-slate-300 mb-4 leading-relaxed">
                     {item.question}
                   </p>
@@ -159,43 +205,133 @@ function InterviewFeedbackPage(): React.ReactElement {
                 <div className="space-y-4">
                   <h4 className="text-white font-medium flex items-center gap-2">
                     <Target className="w-4 h-4" />
-                    AI Feedback
+                    AI Feedback - {item.questionType === 'behavioral' ? 'Behavioral' : 'Technical'} Question
                   </h4>
                   
-                  {/* Score */}
-                  {item.feedback.score && (
-                    <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                      <span className="text-slate-300 font-medium">Overall Score:</span>
-                      <span className="text-xl font-bold text-green-400">
-                        {item.feedback.score}/10
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Strengths */}
-                  {item.feedback.strengths && (
-                    <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                      <h5 className="text-green-300 font-medium mb-2 flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4" />
-                        Strengths
-                      </h5>
-                      <p className="text-slate-200 text-sm leading-relaxed">
-                        {item.feedback.strengths}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {/* Suggestions */}
-                  {item.feedback.suggestions && (
-                    <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                      <h5 className="text-blue-300 font-medium mb-2 flex items-center gap-2">
-                        <Lightbulb className="w-4 h-4" />
-                        Suggestions for Improvement
-                      </h5>
-                      <p className="text-slate-200 text-sm leading-relaxed">
-                        {item.feedback.suggestions}
-                      </p>
-                    </div>
+                  {item.questionType === 'behavioral' ? (
+                    // Behavioral feedback rendering
+                    <>
+                      {/* Score */}
+                      {(item.feedback as BehavioralFeedback).score && (
+                        <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                          <span className="text-slate-300 font-medium">Overall Score:</span>
+                          <span className="text-xl font-bold text-green-400">
+                            {(item.feedback as BehavioralFeedback).score}/10
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Strengths */}
+                      {(item.feedback as BehavioralFeedback).strengths && (
+                        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                          <h5 className="text-green-300 font-medium mb-2 flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4" />
+                            Strengths
+                          </h5>
+                          <p className="text-slate-200 text-sm leading-relaxed">
+                            {(item.feedback as BehavioralFeedback).strengths}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {/* Suggestions */}
+                      {(item.feedback as BehavioralFeedback).suggestions && (
+                        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                          <h5 className="text-blue-300 font-medium mb-2 flex items-center gap-2">
+                            <Lightbulb className="w-4 h-4" />
+                            Suggestions for Improvement
+                          </h5>
+                          <p className="text-slate-200 text-sm leading-relaxed">
+                            {(item.feedback as BehavioralFeedback).suggestions}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    // Technical feedback rendering
+                    <>
+                      {/* Score Summary Grid */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                          <div className={`text-xl font-bold ${getScoreDisplay((item.feedback as TechnicalFeedback).score).color}`}>
+                            {(item.feedback as TechnicalFeedback).score}/10
+                          </div>
+                          <div className="text-xs text-slate-400">Overall Score</div>
+                        </div>
+                        
+                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                          <div className="text-xl font-bold text-blue-400">
+                            {((item.feedback as TechnicalFeedback).similarity * 100).toFixed(1)}%
+                          </div>
+                          <div className="text-xs text-slate-400">Semantic Match</div>
+                        </div>
+                        
+                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                          <div className="text-xl font-bold text-green-400">
+                            {(item.feedback as TechnicalFeedback).keywordMatches.length}
+                          </div>
+                          <div className="text-xs text-slate-400">Keywords Found</div>
+                        </div>
+                        
+                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                          <div className="text-xl">
+                            {(item.feedback as TechnicalFeedback).isCorrect ? '✅' : '❌'}
+                          </div>
+                          <div className="text-xs text-slate-400">
+                            {(item.feedback as TechnicalFeedback).isCorrect ? 'Correct' : 'Needs Work'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Detailed Technical Feedback */}
+                      <div className="space-y-4">
+                        <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                          <h5 className="text-purple-300 font-medium mb-2 flex items-center gap-2">
+                            <Brain className="w-4 h-4" />
+                            Detailed Feedback
+                          </h5>
+                          <p className="text-slate-200 text-sm leading-relaxed">
+                            {(item.feedback as TechnicalFeedback).feedback}
+                          </p>
+                        </div>
+
+                        {(item.feedback as TechnicalFeedback).keywordMatches.length > 0 && (
+                          <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                            <h5 className="text-green-300 font-medium mb-2 flex items-center gap-2">
+                              <Star className="w-4 h-4" />
+                              Keywords You Mentioned
+                            </h5>
+                            <div className="flex flex-wrap gap-2">
+                              {(item.feedback as TechnicalFeedback).keywordMatches.map((keyword, keywordIndex) => (
+                                <span
+                                  key={keywordIndex}
+                                  className="bg-green-600 text-white px-2 py-1 rounded-full text-xs"
+                                >
+                                  {keyword}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {(item.feedback as TechnicalFeedback).suggestions && (item.feedback as TechnicalFeedback).suggestions.length > 0 && (
+                          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                            <h5 className="text-blue-300 font-medium mb-2 flex items-center gap-2">
+                              <Lightbulb className="w-4 h-4" />
+                              Suggestions for Improvement
+                            </h5>
+                            <ul className="space-y-1">
+                              {(item.feedback as TechnicalFeedback).suggestions.map((suggestion, suggestionIndex) => (
+                                <li key={suggestionIndex} className="flex items-start text-slate-200 text-sm">
+                                  <span className="text-blue-400 mr-2">•</span>
+                                  <span>{suggestion}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
               ) : (
