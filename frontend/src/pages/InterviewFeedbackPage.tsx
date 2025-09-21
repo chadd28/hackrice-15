@@ -6,7 +6,7 @@ import { ArrowLeft, Clock, CheckCircle, Target, Lightbulb, User, Brain, Star } f
 interface BehavioralFeedback {
   score?: number;
   strengths?: string;
-  suggestions?: string;
+  suggestions?: string[] | string; // Handle both array and string formats
 }
 
 interface TechnicalFeedback {
@@ -241,9 +241,51 @@ function InterviewFeedbackPage(): React.ReactElement {
                             <Lightbulb className="w-4 h-4" />
                             Suggestions for Improvement
                           </h5>
-                          <p className="text-slate-200 text-sm leading-relaxed">
-                            {(item.feedback as BehavioralFeedback).suggestions}
-                          </p>
+                          <div className="text-slate-200 text-sm leading-relaxed">
+                            {(() => {
+                              const suggestions = (item.feedback as BehavioralFeedback).suggestions;
+                              
+                              // Handle array format (new format)
+                              if (Array.isArray(suggestions)) {
+                                return (
+                                  <ul className="space-y-1">
+                                    {suggestions.map((suggestion, idx) => (
+                                      <li key={idx} className="flex items-start">
+                                        <span className="text-blue-400 mr-2">•</span>
+                                        <span>{suggestion}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                );
+                              }
+                              
+                              // Handle string format (fallback for old data)
+                              if (typeof suggestions === 'string') {
+                                // Check if it contains multiple sentences and format as bullets
+                                if (suggestions.includes('.') && suggestions.split('.').length > 2) {
+                                  const suggestionList = suggestions
+                                    .split('.')
+                                    .map(s => s.trim())
+                                    .filter(s => s.length > 10);
+                                  
+                                  return (
+                                    <ul className="space-y-1">
+                                      {suggestionList.map((suggestion, idx) => (
+                                        <li key={idx} className="flex items-start">
+                                          <span className="text-blue-400 mr-2">•</span>
+                                          <span>{suggestion}{suggestion.endsWith('.') ? '' : '.'}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  );
+                                } else {
+                                  return <p>{suggestions}</p>;
+                                }
+                              }
+                              
+                              return null;
+                            })()}
+                          </div>
                         </div>
                       )}
                     </>

@@ -442,7 +442,7 @@ KEYWORDS FOUND: ${keywordMatches.join(', ') || 'None'}
 MISSING KEYWORDS: ${question.keywords.filter(k => !keywordMatches.includes(k)).join(', ') || 'None'}
 
 Please provide detailed feedback on this answer. Your feedback should:
-1. Start with an emoji and clear assessment (e.g., "🎯 Fully correct", "✅ Mostly correct", "⚠️ Partially correct", "❌ Incorrect", "📚 Missing key elements")
+1. Start with a clear assessment (e.g., "Fully correct", "Mostly correct", "Partially correct", "Incorrect", "Missing key elements")
 2. Explain what the candidate did well (if anything)
 3. Identify what's missing or incorrect
 4. Be constructive and encouraging
@@ -451,11 +451,11 @@ Please provide detailed feedback on this answer. Your feedback should:
 IMPORTANT: Return ONLY the feedback text. Do NOT wrap in quotes or add any other formatting.
 
 Examples:
-- "🎯 Fully correct! You demonstrate excellent understanding of the concept and covered all key points with clear explanations."
-- "✅ Mostly correct! You understood the main concept but missed some important details about error handling."
-- "⚠️ Partially correct. You touched on relevant concepts but missed key elements like performance considerations and best practices."
-- "❌ Incorrect approach. Your answer focuses on a different concept and doesn't address the core question about data structures."
-- "📚 Missing key elements. While you mentioned the basics, you didn't explain the implementation details or use cases."`;
+- "Fully correct! You demonstrate excellent understanding of the concept and covered all key points with clear explanations."
+- "Mostly correct! You understood the main concept but missed some important details about error handling."
+- "Partially correct. You touched on relevant concepts but missed key elements like performance considerations and best practices."
+- "Incorrect approach. Your answer focuses on a different concept and doesn't address the core question about data structures."
+- "Missing key elements. While you mentioned the basics, you didn't explain the implementation details or use cases."`;
 
       const result = await model.generateContent(prompt);
       const feedback = result.response.text().trim();

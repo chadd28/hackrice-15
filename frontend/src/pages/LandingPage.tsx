@@ -40,7 +40,7 @@ function LandingPage(): React.ReactElement {
               Prepr
             </h1>
           </div>
-          <div className="hidden md:flex gap-6 items-center">
+          <div className="hidden md:flex gap-6 items-center ml-15"> 
             <a href="#features" className="text-slate-300 hover:text-white font-medium transition-colors">Features</a>
             <a href="#how-it-works" className="text-slate-300 hover:text-white font-medium transition-colors">How it Works</a>
           </div>
@@ -83,7 +83,6 @@ function LandingPage(): React.ReactElement {
               Master Every Interview with AI-Powered Practice
             </h2>
             <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto">
-              Upload your resume, get tailored technical and behavioral questions, and receive instant AI feedback. 
               Transform your interview skills and land your dream job with confidence.
             </p>
             <div className="flex justify-center">
@@ -175,7 +174,7 @@ function LandingPage(): React.ReactElement {
           />
           <WorkflowStep 
             number="4"
-            title="Get Comprehensive Feedback"
+            title="Get Feedback"
             description="Receive detailed AI evaluation for all responses with scores, strengths, weaknesses, and actionable improvement suggestions."
             delay={0.4}
           />
