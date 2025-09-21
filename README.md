@@ -1,12 +1,29 @@
 # Prepr - AI Interview Practice Platform
 
-🏆 **Built for HackRice 15** - An intelligent interview preparation platform that transforms how candidates practice for behavioral and technical interviews.
+🏆 **Built for HackRice 15** - AI-powered interview preparation with real-time feedback and personalized questions.
 
-![Tech Stack](frontend/public/tech_map.png)
+<div align="center">
+  <img src="frontend/public/tech_map.png" alt="Tech Stack" style="background-color: white; padding: 20px; border-radius: 8px;" />
+</div>
 
-## 🎯 Overview
+## 🎯 What is Prepr?
 
-Prepr is a comprehensive AI-powered interview practice platform that provides realistic mock interviews with instant feedback. Using advanced AI technologies, Prepr simulates real interview experiences with personalized questions, real-time speech analysis, and detailed performance feedback.
+Prepr helps you practice interviews with AI. Upload your resume and job description, then get personalized behavioral and technical questions with instant feedback on your answers.
+
+## ✨ Features
+
+- **Smart Questions**: AI generates questions tailored to your background and target job
+- **Voice Interaction**: Speak your answers naturally with speech-to-text
+- **Real-time Feedback**: Get scored evaluations and improvement suggestions
+- **Video Analysis**: AI analyzes your presentation skills and body language
+- **Technical Practice**: Practice coding questions with semantic evaluation
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS
+- **Backend**: Node.js + Express + TypeScript + Supabase
+- **AI**: Google Gemini + TTS/STT + Cohere Embeddings
+- **Other**: PDF parsing, video analysis, real-time transcription
 
 ## ✨ Key Features
 
@@ -58,61 +75,7 @@ Prepr is a comprehensive AI-powered interview practice platform that provides re
 - **CORS** for secure cross-origin resource sharing
 - **dotenv** for environment variable management
 
-## 📁 Project Architecture
-
-```
-prepr/
-├── frontend/                    # React TypeScript frontend
-│   ├── src/
-│   │   ├── components/         # Reusable UI components
-│   │   │   ├── DarkGlowButton.tsx
-│   │   │   └── UploadField.tsx
-│   │   ├── pages/              # Application pages
-│   │   │   ├── LandingPage.tsx
-│   │   │   ├── LoginPage.tsx
-│   │   │   ├── RegisterPage.tsx
-│   │   │   ├── DashboardPage.tsx
-│   │   │   ├── InterviewSetupPage.tsx
-│   │   │   ├── InterviewPage.tsx
-│   │   │   ├── InterviewFeedbackPage.tsx
-│   │   │   └── TechnicalQuestionTestPage.tsx
-│   │   ├── services/           # API and business logic
-│   │   │   ├── authService.ts
-│   │   │   ├── interviewService.ts
-│   │   │   ├── ttsService.ts
-│   │   │   ├── sttService.ts
-│   │   │   ├── videoService.ts
-│   │   │   ├── behavGraderService.ts
-│   │   │   ├── technicalEvaluationService.ts
-│   │   │   └── multiModalService.ts
-│   │   ├── types/              # TypeScript definitions
-│   │   └── styles/             # CSS and styling
-│   └── public/
-│       ├── Prepr_logo.png
-│       └── tech_map.png
-├── backend/                     # Node.js Express backend
-│   ├── src/
-│   │   ├── controllers/        # Request handlers
-│   │   │   ├── authController.ts
-│   │   │   ├── geminiController.ts
-│   │   │   ├── behavGraderController.ts
-│   │   │   ├── technicalEvaluationController.ts
-│   │   │   ├── multiModalController.ts
-│   │   │   └── uploadController.ts
-│   │   ├── routes/             # API route definitions
-│   │   ├── services/           # Business logic services
-│   │   │   ├── embeddingCache.ts
-│   │   │   ├── cohereEmbeddingService.ts
-│   │   │   └── technicalEvaluatorService.ts
-│   │   ├── middleware/         # Custom middleware
-│   │   ├── data/               # Static data and configurations
-│   │   └── types/              # TypeScript definitions
-│   ├── cache/                  # Embedding cache storage
-│   └── interactive-interview-simulator.ts
-└── README.md
-```
-
-## � Getting Started
+## Getting Started
 
 ### Prerequisites
 - **Node.js** (v18 or higher)
@@ -211,70 +174,6 @@ prepr/
 8. **Access the application:**
    - **Frontend**: http://localhost:5173
    - **Backend**: http://localhost:3000
-
-## 🎮 How to Use Prepr
-
-### 1. **Account Setup**
-- Register with your email and create a secure account
-- Login to access your personalized dashboard
-
-### 2. **Interview Preparation**
-- Upload your resume (PDF format supported)
-- Provide job description or company information
-- Add any additional context (portfolio, certifications)
-
-### 3. **Mock Interview**
-- AI generates personalized questions based on your background
-- Experience realistic interview flow with voice interaction
-- Answer questions while being recorded for analysis
-
-### 4. **Feedback & Improvement**
-- Receive detailed feedback on your responses
-- Get scored evaluations for both behavioral and technical answers
-- Review presentation analysis and improvement suggestions
-
-### 5. **Technical Practice**
-- Access dedicated technical question practice mode
-- Filter questions by role (Software Engineer, Data Scientist, etc.)
-- Get real-time evaluation with semantic analysis
-
-## 🔧 Advanced Features
-
-### **Video Frame Analysis**
-- Captures single frames at key moments (not continuous recording)
-- AI analyzes eye contact, posture, and engagement
-- Provides actionable presentation feedback
-
-### **Semantic Evaluation**
-- Uses embedding similarity for technical answer assessment
-- Keyword matching for comprehensive evaluation
-- Hybrid scoring system combining multiple factors
-
-### **Intelligent Question Generation**
-- Context-aware behavioral questions based on resume content
-- Job-specific questions tailored to role requirements
-- Company culture fit assessment when company info provided
-
-### **Caching System**
-- Efficient embedding cache for faster technical evaluations
-- Optimized API usage to reduce costs
-- Persistent storage for improved performance
-
-## 🧪 Testing & Development
-
-### **Interactive Simulator**
-```bash
-cd backend
-npm run simulator
-```
-Run the interactive technical interview simulator for testing and development.
-
-### **Environment Validation**
-```bash
-cd backend
-npm run check-env
-```
-Validate all required environment variables are properly configured.
 
 ## 🤝 Contributing
 
