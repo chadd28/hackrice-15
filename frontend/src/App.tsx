@@ -12,8 +12,8 @@ import InterviewSetupPage from './pages/InterviewSetupPage'
 import InterviewPage from './pages/InterviewPage'
 import InterviewFeedbackPage from './pages/InterviewFeedbackPage'
 import ProtectedRoute from './components/ProtectedRoute'
-import ProtectedRoute from './components/ProtectedRoute'
 import TechnicalQuestionTestPage from './pages/TechnicalQuestionTestPage'
+import JobBriefTester from './pages/JobBriefTester'
 
 function App(): React.ReactElement {
   return (

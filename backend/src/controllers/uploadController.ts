@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-<<<<<<< HEAD
 import multer, { MulterError } from 'multer';
 
 // Polyfills for Node.js environment when using pdfjs-dist
@@ -10,6 +9,9 @@ if (typeof globalThis.DOMMatrix === 'undefined') {
   // @ts-ignore
   globalThis.DOMMatrix = class DOMMatrix {
     constructor() {}
+    static fromFloat32Array() { return new DOMMatrix(); }
+    static fromFloat64Array() { return new DOMMatrix(); }
+    static fromMatrix() { return new DOMMatrix(); }
   };
 }
 
@@ -31,9 +33,6 @@ if (typeof globalThis.OffscreenCanvas === 'undefined') {
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
 }
-=======
-import multer from 'multer';
->>>>>>> c91411b (Add files)
 
 // Configure multer for file uploads
 const upload = multer({ 
@@ -311,26 +310,8 @@ async function extractPdfContent(buffer: Buffer, filename: string, type: string)
     // Use pdfjs-dist legacy build for Node.js compatibility
     let pdfjsLib;
     try {
-<<<<<<< HEAD
       // Import the legacy build specifically for Node.js
       pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-=======
-      // Import legacy build specifically for Node.js
-      pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-      
-      // Set up Node.js environment compatibility
-      if (typeof globalThis.DOMMatrix === 'undefined') {
-        // Simple DOMMatrix polyfill for Node.js
-        (globalThis as any).DOMMatrix = class DOMMatrix {
-          constructor() {
-            // Mock DOMMatrix for Node.js
-          }
-          static fromFloat32Array() { return new DOMMatrix(); }
-          static fromFloat64Array() { return new DOMMatrix(); }
-          static fromMatrix() { return new DOMMatrix(); }
-        };
-      }
->>>>>>> c91411b (Add files)
       
       // Configure worker for legacy build (not needed in Node.js but prevents warnings)
       if (pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {

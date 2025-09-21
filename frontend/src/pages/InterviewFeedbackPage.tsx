@@ -26,14 +26,12 @@ interface FeedbackData {
   question: string;
   answer: string;
   feedback: {
-    score?: number;
+    score?: number | string;
     strengths?: string;
-    suggestions?: string;
+    suggestions?: string | string[];
     presentationStrengths?: string[];
     presentationWeaknesses?: string[];
     areasForImprovement?: string | string[];
-    suggestions?: string | string[];
-    score?: number | string;
     raw?: string;
   } | null;
   questionType: 'behavioral' | 'technical';
@@ -88,24 +86,11 @@ function InterviewFeedbackPage(): React.ReactElement {
     return <div></div>;
   }
 
-  const { duration, questionsAnswered, totalQuestions, feedbackData, presentationSummary, completedAt } = results;
+  const { duration, feedbackData, presentationSummary, completedAt } = results;
   
   // Debug: Log specific feedback data
   console.log('📋 Feedback data array:', feedbackData);
   console.log('📊 Number of feedback items:', feedbackData?.length || 0);
-
-  // Calculate average score - handle both behavioral and technical feedback
-  const validScores = (feedbackData || [])
-    .map(item => {
-      if (!item.feedback) return null;
-      const feedback = item.feedback as GraderFeedback;
-      return typeof feedback.score === 'number' ? feedback.score : null;
-    })
-    .filter((score): score is number => typeof score === 'number');
-  
-  const averageScore = validScores.length > 0 
-    ? Math.round(validScores.reduce((sum, score) => sum + score, 0) / validScores.length * 10) / 10
-    : null;
 
   // Get score display helper - handles both 1-10 (technical) and behavioral scores
   const getScoreDisplay = (score: number) => {
@@ -403,9 +388,10 @@ function InterviewFeedbackPage(): React.ReactElement {
                   <p className="text-slate-400 text-sm">No feedback available for this question.</p>
                 </div>
               )}
+              </div>
             </motion.div>
           ))
-          ) : (
+        ) : (
             <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 text-center">
               <p className="text-slate-400">No feedback data available.</p>
             </div>
