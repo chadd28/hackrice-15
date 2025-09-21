@@ -2,7 +2,7 @@
 
 🏆 **Built for HackRice 15** - An intelligent interview preparation platform that transforms how candidates practice for behavioral and technical interviews.
 
-![Tech Stack](public/tech_map.png)
+![Tech Stack](frontend/public/tech_map.png)
 
 ## 🎯 Overview
 
