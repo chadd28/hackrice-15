@@ -292,7 +292,7 @@ function SingleQuestionPage(): React.ReactElement {
         ]);
         
         console.log('Grader response:', gradeResp);
-<<<<<<< HEAD
+        
         if (videoAnalysis.status === 'fulfilled' && videoAnalysis.value) {
           console.log('Video analysis response:', videoAnalysis.value);
         } else if (videoAnalysis.status === 'rejected') {
@@ -300,34 +300,12 @@ function SingleQuestionPage(): React.ReactElement {
         }
         
         // Combine results if both are available
-        let combinedFeedback: GraderFeedback | null = null;
+        let combinedFeedback = null;
         if (gradeResp.status === 'fulfilled') {
           combinedFeedback = gradeResp.value.feedback || null;
           
           // Add presentation analysis if available
           if (videoAnalysis.status === 'fulfilled' && videoAnalysis.value?.analysis && combinedFeedback) {
-=======
-        
-        // Wait for video analysis to complete if it was started
-        let videoAnalysis = null;
-        if (videoAnalysisPromise) {
-          try {
-            videoAnalysis = { status: 'fulfilled', value: await videoAnalysisPromise };
-            console.log('Video analysis response:', videoAnalysis.value);
-          } catch (videoErr) {
-            videoAnalysis = { status: 'rejected', reason: videoErr };
-            console.error('Video analysis failed:', videoAnalysis.reason);
-          }
-        }
-        
-        // Combine results if both are available
-        let combinedFeedback = null;
-        if (gradeResp.success) {
-          combinedFeedback = gradeResp.feedback || null;
-          
-          // Add presentation analysis if available
-          if (videoAnalysis && videoAnalysis.status === 'fulfilled' && videoAnalysis.value?.analysis) {
->>>>>>> c91411b (Add files)
             const analysis = videoAnalysis.value.analysis;
             combinedFeedback = {
               ...combinedFeedback,
@@ -378,29 +356,6 @@ function SingleQuestionPage(): React.ReactElement {
       console.log('🎵 Audio recording started');
     } catch (error) {
       console.error('❌ Failed to start audio recording:', error);
-    }
-  };
-
-  const stopMultiModalAnalysis = async () => {
-    if (!audioRecorder.current) {
-      console.warn('🎯 Cannot stop audio recording: missing audio recorder');
-      return;
-    }
-    
-    try {
-      console.log('🎯 Stopping audio recording...');
-      
-      // Stop audio recording
-      if (audioRecorder.current.state === 'recording') {
-        audioRecorder.current.stop();
-        console.log('🎵 Audio recording stopped');
-      }
-      
-      // Wait a bit for the final data to be available
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-    } catch (error) {
-      console.error('❌ Failed to stop audio recording:', error);
     }
   };
 

@@ -75,14 +75,6 @@ function App(): React.ReactElement {
         } 
       />
       <Route 
-        path="/interview/feedback" 
-        element={
-          <ProtectedRoute>
-            <InterviewPage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
         path="/interview" 
         element={
           <ProtectedRoute>

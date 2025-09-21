@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, CheckCircle, Target, Lightbulb, User, Brain, Star } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Target, Lightbulb, Star } from 'lucide-react';
 import { GraderFeedback } from '../services/behavGraderService';
 
 
@@ -9,16 +9,6 @@ interface BehavioralFeedback {
   score?: number;
   strengths?: string;
   suggestions?: string;
-}
-
-interface TechnicalFeedback {
-  questionId: number;
-  similarity: number;
-  score: number;
-  feedback: string;
-  isCorrect: boolean;
-  keywordMatches: string[];
-  suggestions: string[];
 }
 
 interface FeedbackData {

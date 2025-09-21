@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, LogOut, MessageSquare, BarChart3, Briefcase, FileText, Bot, Sparkles, Upload, Star } from 'lucide-react';
+import { User, LogOut, MessageSquare, BarChart3, Briefcase, FileText, Upload, Star } from 'lucide-react';
 import { authService } from '../services/authService';
 
 function DashboardPage(): React.ReactElement {

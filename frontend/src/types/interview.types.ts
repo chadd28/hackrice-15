@@ -25,9 +25,8 @@ export interface ProcessedContent {
 }
 
 export interface GeneratedQuestions {
-  technical?: Question[];
   behavioral: Question[];
-  technical: Question[];
+  technical?: Question[];
 }
 
 export interface Question {

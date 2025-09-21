@@ -48,75 +48,48 @@ export const analyzeInterviewPresence = async (
       const genAI = new GoogleGenerativeAI(geminiApiKey);
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-      const prompt = `Analyze this interview video frame for presentation skills. Focus HEAVILY on eye contact and visible enthusiasm. Only observable visual behavior, no personality inferences.
+      const prompt = `Analyze this interview video frame for presentation skills. Provide BALANCED and CONSTRUCTIVE feedback focusing on professional development.
 
-IMPORTANT: Always provide balanced feedback. Find at least 1 genuine positive presentation behaviors, even if subtle.
+CRITICAL RULE: NEVER contradict yourself. If you mention eye contact as a strength, do NOT mention lack of eye contact as a weakness. Choose ONE perspective per trait.
 
-CRITICAL: Be very careful about categorizing observations as STRENGTHS vs WEAKNESSES.
+IMPORTANT: Always provide encouraging and balanced feedback. Look for genuine positives and frame improvements as growth opportunities.
 
-POSITIVE BEHAVIORS (go in presentationStrengths):
-- Direct eye contact with camera
-- Genuine smiles and positive expressions
-- Engaged, enthusiastic facial expressions
-- Good posture and professional presence
-- Confident body language
-- Appropriate warmth and approachability
-- Professional appearance and grooming
-- Attentive and focused positioning
-- Calm and composed demeanor
+ANALYSIS APPROACH:
+1. Observe the person's presentation objectively
+2. Identify 2-3 genuine strengths to acknowledge
+3. Identify 1-2 areas for growth (without contradicting strengths)
+4. Frame all feedback constructively
 
-NEGATIVE BEHAVIORS (go in presentationWeaknesses):
-- Looking away from camera or distracted gaze
-- Neutral, flat, or unexpressive facial demeanor
-- Lack of visible enthusiasm or engagement
-- Slouched or unprofessional posture
-- Nervous fidgeting or restless behavior
-- Overly stiff or overly casual presentation
+POSITIVE BEHAVIORS (choose those that are genuinely present):
+- Maintains good eye contact with camera
+- Shows genuine smiles and positive expressions
+- Demonstrates professional appearance and posture
+- Displays engaged and attentive positioning
+- Exhibits calm and composed demeanor
+- Professional setup and background
+- Confident and relaxed body language
+- Good head positioning and framing
 
-PRIORITY CRITERIA (Focus heavily on these):
+AREAS FOR GROWTH (only mention if NOT already praised as strength):
+- Could enhance eye contact consistency (only if eye contact was NOT listed as strength)
+- Opportunity for more expressive engagement (only if expressions were NOT praised)
+- Potential to optimize posture (only if posture was NOT a strength)
+- Room for enhanced enthusiasm visibility
+- Opportunity for more animated delivery
 
-1. Eye Contact / Gaze (HIGH PRIORITY):
-- Is the person looking directly at camera vs looking away?
-- Face positioning - centered and engaged with viewer?
-- Direct gaze vs distracted/avoidant eye contact?
-- Professional eye engagement level?
-
-2. Passion / Enthusiasm - Visible (HIGH PRIORITY):
-- Observable genuine smiles and positive expressions?
-- Facial animation and expression variety?
-- Eyes showing engagement vs flat/disinterested?
-- Observable energy and enthusiasm through face?
-- Expression intensity that shows interest?
-
-3. Professional Yet Approachable Expression:
-- Maintains professional baseline with appropriate warmth?
-- Balanced serious yet friendly demeanor?
-- Avoiding overly exaggerated or inappropriate expressions?
-
-4. Posture / Stability:
-- Upright, confident posture vs slouched appearance?
-- Stable positioning without excessive movement?
-- Professional physical presence?
-
-5. Head Pose & Movement:
-- Natural head positioning vs excessive movement?
-- Composed vs restless head gestures?
-
-6. Gestures (Hands) - OPTIONAL:
-- If hands visible: purposeful vs excessive gesturing?
-- Note: Having no visible hands/gestures is perfectly fine and not a weakness
-
-7. Fidgeting / Self-Touch:
-- Observable nervous touching or fidgeting?
-- Composed vs restless physical behavior?
+CONSISTENCY RULES:
+- If eye contact is good → list as strength, do NOT mention eye contact in weaknesses
+- If posture is professional → list as strength, do NOT mention posture improvements
+- If expressions are positive → list as strength, do NOT suggest more expression
+- Focus on different aspects for strengths vs areas for improvement
 
 Return ONLY a JSON object with exactly this format:
 {
-  "presentationStrengths": ["unique positive behavior 1", "different positive behavior 2"],
-  "presentationWeaknesses": ["unique negative behavior 1", "different negative behavior 2"]
+  "presentationStrengths": ["specific genuine strength 1", "different genuine strength 2", "another genuine strength 3"],
+  "presentationWeaknesses": ["growth opportunity 1 (different from strengths)", "growth opportunity 2 (different from strengths)"]
 }
 
-CRITICAL: "Neutral and unexpressive facial demeanor" is a WEAKNESS, not a strength. Only put genuinely positive behaviors in presentationStrengths, but ensure at least 1 is always included.`;
+CRITICAL: Ensure NO contradictions between strengths and weaknesses. Each trait should only appear in ONE category.`;
 
       const cleanImageData = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
       console.log('🧹 Cleaned image data length:', cleanImageData.length);
@@ -159,6 +132,8 @@ CRITICAL: "Neutral and unexpressive facial demeanor" is a WEAKNESS, not a streng
         }
 
         console.log('✅ Gemini visual analysis completed successfully');
+        console.log('📊 Parsed strengths:', analysis.presentationStrengths);
+        console.log('📊 Parsed weaknesses:', analysis.presentationWeaknesses);
 
       } catch (parseError) {
         console.error('Failed to parse Gemini response:', parseError);
@@ -176,6 +151,10 @@ CRITICAL: "Neutral and unexpressive facial demeanor" is a WEAKNESS, not a streng
   // Remove duplicates from arrays
   const uniqueStrengths = [...new Set(presentationStrengths)];
   const uniqueWeaknesses = [...new Set(presentationWeaknesses)];
+
+  console.log('🎯 Final presentation analysis results:');
+  console.log('📈 Final strengths:', uniqueStrengths);
+  console.log('📉 Final weaknesses:', uniqueWeaknesses);
 
   return {
     strengths,

@@ -8,7 +8,6 @@ import { ttsService } from '../services/ttsService';
 import { sttService } from '../services/sttService';
 import { videoService } from '../services/videoService';
 import { behavGraderService } from '../services/behavGraderService';
-import { captureVideoFrame } from '../services/multiModalService';
 import { captureVideoFrame, analyzeMultiModal } from '../services/multiModalService';
 import { technicalQuestionsService } from '../services/technicalQuestionsService';
 import technicalEvaluationService from '../services/technicalEvaluationService';
@@ -357,11 +356,12 @@ function InterviewPage(): React.ReactElement {
     console.log('🔍 Debug - currentQuestionIndex:', currentQuestionIndex);
 
     // Simple: 0-1 = behavioral, 2-3 = technical
-    let currentQuestion;
+    // Get current question based on the global index
+    let currentQuestion: any = null;
     if (currentQuestionIndex < 2) {
       currentQuestion = questions.behavioral[currentQuestionIndex];
     } else {
-      currentQuestion = questions.technical[currentQuestionIndex - 2];
+      currentQuestion = questions.technical?.[currentQuestionIndex - 2];
     }
 
     if (!currentQuestion) { 
@@ -411,7 +411,7 @@ function InterviewPage(): React.ReactElement {
     if (questionIndex < 2) {
       targetQuestion = questions.behavioral[questionIndex];
     } else {
-      targetQuestion = questions.technical[questionIndex - 2];
+      targetQuestion = questions.technical?.[questionIndex - 2];
     }
 
     if (!targetQuestion) {
@@ -542,7 +542,7 @@ function InterviewPage(): React.ReactElement {
     if (currentQuestionIndex < 2) {
       currentQuestion = questions.behavioral[currentQuestionIndex];
     } else {
-      currentQuestion = questions.technical[currentQuestionIndex - 2];
+      currentQuestion = questions.technical?.[currentQuestionIndex - 2];
     }
     if (currentQuestion) {
       // Mark question as answered
@@ -553,7 +553,6 @@ function InterviewPage(): React.ReactElement {
     let feedbackResult = null;
     
     // Capture video frame for multimodal analysis
-    let videoAnalysisPromise = null;
     if (videoRef.current) {
       try {
         console.log('📹 Capturing video frame for analysis...');
@@ -566,7 +565,7 @@ function InterviewPage(): React.ReactElement {
           
           // Send frame for multimodal analysis
           const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-          videoAnalysisPromise = fetch(`${backendUrl}/api/multi-modal/analyze`, {
+          fetch(`${backendUrl}/api/multi-modal/analyze`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

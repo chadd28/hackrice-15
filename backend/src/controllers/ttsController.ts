@@ -151,7 +151,7 @@ export const askQuestion = async (req: Request, res: Response) => {
         input: { text: question },
         voice: { 
           languageCode: "en-US", 
-          name: "en-US-Wavenet-D",
+          name: "en-US-Chirp3-HD-Sadaltager",
           ssmlGender: "MALE" 
         },
         audioConfig: { 
