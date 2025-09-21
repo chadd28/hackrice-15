@@ -10,7 +10,7 @@ export const testTTS = async (req: Request, res: Response) => {
     }
 
 
-    const text = "Hello! Welcome to your interview. My name is John, and I’ll be asking you a few questions today.";
+    const text = "Hello! Welcome to your interview. My name is Prepper, and I’ll be asking you a few questions today.";
 
 
     // Call Google TTS REST API
@@ -151,7 +151,7 @@ export const askQuestion = async (req: Request, res: Response) => {
         input: { text: question },
         voice: { 
           languageCode: "en-US", 
-          name: "en-US-Wavenet-D",
+          name: "en-US-Chirp3-HD-Sadaltager",
           ssmlGender: "MALE" 
         },
         audioConfig: { 
