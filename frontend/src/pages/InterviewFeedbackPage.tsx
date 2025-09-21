@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, CheckCircle, Target, Lightbulb, Star } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Target, Lightbulb, Star, Brain } from 'lucide-react';
 import { GraderFeedback } from '../services/behavGraderService';
 
 
@@ -82,6 +82,19 @@ function InterviewFeedbackPage(): React.ReactElement {
   console.log('📋 Feedback data array:', feedbackData);
   console.log('📊 Number of feedback items:', feedbackData?.length || 0);
 
+  // Calculate average score from individual question feedback
+  const validScores = (feedbackData || [])
+    .map(item => {
+      if (!item.feedback) return null;
+      const score = (item.feedback as any).score;
+      return typeof score === 'number' ? score : null;
+    })
+    .filter((score): score is number => score !== null);
+  
+  const averageScore = validScores.length > 0 
+    ? Math.round(validScores.reduce((sum, score) => sum + score, 0) / validScores.length * 10) / 10
+    : null;
+
   // Get score display helper - handles both 1-10 (technical) and behavioral scores
   const getScoreDisplay = (score: number) => {
     // For technical questions (1-10 scale)
@@ -150,9 +163,9 @@ function InterviewFeedbackPage(): React.ReactElement {
             <div className="bg-slate-700/50 rounded-lg p-4 text-center">
               <Target className="w-8 h-8 text-purple-400 mx-auto mb-2" />
               <div className="text-2xl font-bold text-white">
-                {presentationSummary?.score || 'N/A'}
+                {averageScore !== null ? `${averageScore}/10` : 'N/A'}
               </div>
-              <div className="text-sm text-slate-400">{presentationSummary?.score ? 'Overall Score' : 'Score'}</div>
+              <div className="text-sm text-slate-400">Avg Score</div>
             </div>
           </div>
         </motion.div>
@@ -291,85 +304,91 @@ function InterviewFeedbackPage(): React.ReactElement {
                       )}
                     </>
                   ) : (
-                    // Technical feedback rendering - using unified GraderFeedback structure
+                    // Technical feedback rendering
                     <>
-                      {/* Score */}
-                      {(item.feedback as GraderFeedback).score && (
-                        <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                          <span className="text-slate-300 font-medium">Overall Score:</span>
-                          <span className={`text-xl font-bold ${getScoreDisplay(typeof (item.feedback as GraderFeedback).score === 'number' ? (item.feedback as GraderFeedback).score as number : Number((item.feedback as GraderFeedback).score) || 0).color}`}>
-                            {(item.feedback as GraderFeedback).score}/10
-                          </span>
+                      {/* Score Summary Grid */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                          <div className={`text-xl font-bold ${getScoreDisplay((item.feedback as any).score || 0).color}`}>
+                            {(item.feedback as any).score || 0}/10
+                          </div>
+                          <div className="text-xs text-slate-400">Overall Score</div>
                         </div>
-                      )}
-                      
-                      {/* Strengths */}
-                      {(item.feedback as GraderFeedback).strengths && (
-                        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                          <h5 className="text-green-300 font-medium mb-2 flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4" />
-                            Strengths
-                          </h5>
-                          <div className="text-slate-200 text-sm leading-relaxed">
-                            {Array.isArray((item.feedback as GraderFeedback).strengths) 
-                              ? (
-                                <ul className="space-y-1">
-                                  {((item.feedback as GraderFeedback).strengths as string[]).map((strength, idx) => (
-                                    <li key={idx}>• {strength}</li>
-                                  ))}
-                                </ul>
-                              )
-                              : (item.feedback as GraderFeedback).strengths
-                            }
+                        
+                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                          <div className="text-xl font-bold text-blue-400">
+                            {(((item.feedback as any).similarity || 0) * 100).toFixed(1)}%
+                          </div>
+                          <div className="text-xs text-slate-400">Semantic Match</div>
+                        </div>
+                        
+                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                          <div className="text-xl font-bold text-green-400">
+                            {((item.feedback as any).keywordMatches || []).length}
+                          </div>
+                          <div className="text-xs text-slate-400">Keywords Found</div>
+                        </div>
+                        
+                        <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                          <div className="text-xl">
+                            {(item.feedback as any).isCorrect ? '✅' : '❌'}
+                          </div>
+                          <div className="text-xs text-slate-400">
+                            {(item.feedback as any).isCorrect ? 'Correct' : 'Needs Work'}
                           </div>
                         </div>
-                      )}
+                      </div>
 
-                      {/* Areas for Improvement */}
-                      {((item.feedback as GraderFeedback).areasForImprovement || (item.feedback as GraderFeedback).weaknesses) && (
-                        <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
-                          <h5 className="text-orange-300 font-medium mb-2 flex items-center gap-2">
-                            <Target className="w-4 h-4" />
-                            Areas for Improvement
-                          </h5>
-                          <div className="text-slate-200 text-sm leading-relaxed">
-                            {(() => {
-                              const improvements = (item.feedback as GraderFeedback).areasForImprovement || (item.feedback as GraderFeedback).weaknesses;
-                              return Array.isArray(improvements) 
-                                ? (
-                                  <ul className="space-y-1">
-                                    {(improvements as string[]).map((improvement, idx) => (
-                                      <li key={idx}>• {improvement}</li>
-                                    ))}
-                                  </ul>
-                                )
-                                : improvements;
-                            })()}
+                      {/* Detailed Technical Feedback */}
+                      <div className="space-y-4">
+                        {(item.feedback as any).feedback && (
+                          <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                            <h5 className="text-purple-300 font-medium mb-2 flex items-center gap-2">
+                              <Brain className="w-4 h-4" />
+                              Detailed Feedback
+                            </h5>
+                            <p className="text-slate-200 text-sm leading-relaxed">
+                              {(item.feedback as any).feedback}
+                            </p>
                           </div>
-                        </div>
-                      )}
-                      
-                      {/* Suggestions */}
-                      {(item.feedback as GraderFeedback).suggestions && (
-                        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                          <h5 className="text-blue-300 font-medium mb-2 flex items-center gap-2">
-                            <Lightbulb className="w-4 h-4" />
-                            Suggestions for Improvement
-                          </h5>
-                          <div className="text-slate-200 text-sm leading-relaxed">
-                            {Array.isArray((item.feedback as GraderFeedback).suggestions) 
-                              ? (
-                                <ul className="space-y-1">
-                                  {((item.feedback as GraderFeedback).suggestions as string[]).map((suggestion, idx) => (
-                                    <li key={idx}>• {suggestion}</li>
-                                  ))}
-                                </ul>
-                              )
-                              : (item.feedback as GraderFeedback).suggestions
-                            }
+                        )}
+
+                        {(item.feedback as any).keywordMatches && (item.feedback as any).keywordMatches.length > 0 && (
+                          <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                            <h5 className="text-green-300 font-medium mb-2 flex items-center gap-2">
+                              <Star className="w-4 h-4" />
+                              Keywords You Mentioned
+                            </h5>
+                            <div className="flex flex-wrap gap-2">
+                              {(item.feedback as any).keywordMatches.map((keyword: string, keywordIndex: number) => (
+                                <span
+                                  key={keywordIndex}
+                                  className="bg-green-600 text-white px-2 py-1 rounded-full text-xs"
+                                >
+                                  {keyword}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+
+                        {(item.feedback as any).suggestions && (item.feedback as any).suggestions.length > 0 && (
+                          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                            <h5 className="text-blue-300 font-medium mb-2 flex items-center gap-2">
+                              <Lightbulb className="w-4 h-4" />
+                              Suggestions for Improvement
+                            </h5>
+                            <ul className="space-y-1">
+                              {(item.feedback as any).suggestions.map((suggestion: string, suggestionIndex: number) => (
+                                <li key={suggestionIndex} className="flex items-start text-slate-200 text-sm">
+                                  <span className="text-blue-400 mr-2">•</span>
+                                  <span>{suggestion}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     </>
                   )}
                 </div>
@@ -394,7 +413,7 @@ function InterviewFeedbackPage(): React.ReactElement {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.7 }}
-            className="bg-slate-800 rounded-xl border border-slate-700 p-6"
+            className="bg-slate-800 rounded-xl border border-slate-700 p-6 mt-6"
           >
             {/* Presentation Header */}
             <div className="flex items-start gap-4 mb-6">

@@ -56,7 +56,7 @@ IMPORTANT: Always provide encouraging and balanced feedback. Look for genuine po
 
 ANALYSIS APPROACH:
 1. Observe the person's presentation objectively
-2. Identify 2-3 genuine strengths to acknowledge
+2. Identify 1-2 genuine strengths to acknowledge
 3. Identify 1-2 areas for growth (without contradicting strengths)
 4. Frame all feedback constructively
 
