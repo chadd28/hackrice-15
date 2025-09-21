@@ -19,7 +19,7 @@ export const testTTS = async (req: Request, res: Response) => {
       {
         input: { text },
         voice: { languageCode: "en-US", 
-                  name: "en-US-Wavenet-D",    // change voice 
+                  name: "en-US-Chirp3-HD-Sadaltager",    // change voice 
                   ssmlGender: "MALE" },
         audioConfig: { audioEncoding: "MP3" },
       }
@@ -84,12 +84,12 @@ export const generateIntroduction = async (req: Request, res: Response) => {
         input: { text: introText },
         voice: { 
           languageCode: "en-US", 
-          name: "en-US-Wavenet-D",
+          name: "en-US-Chirp3-HD-Sadaltager",
           ssmlGender: "MALE" 
         },
         audioConfig: { 
             audioEncoding: "MP3",
-            speakingRate: 1.5, // 1.0 is normal
+            speakingRate: 1.0, // 1.0 is normal
         },
       }
     );
@@ -156,7 +156,7 @@ export const askQuestion = async (req: Request, res: Response) => {
         },
         audioConfig: { 
             audioEncoding: "MP3",
-            speakingRate: 1.5, // 1.0 is normal
+            speakingRate: 1.0, // 1.0 is normal
          },
       }
     );

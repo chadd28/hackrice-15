@@ -33,15 +33,20 @@ Evaluate the following behavioral interview answer.
 Question: "${question}"
 Answer: "${answer}"
 
-Provide structured feedback in JSON format with concise bullet points for each category.
-Give actionable suggestions for improvement in the suggestions field. Limit your responses to 3-5 bullet points per section.
-The JSON should have the following fields:
+
+Provide concise feedback in JSON format. For suggestions, provide 1-3 specific improvements based on answer quality:
+- Strong answers: 1-2 minor refinements
+- Weak answers: 2-3 key improvements
+
+IMPORTANT: Return ONLY valid JSON with this structure:
 {
-  "strengths": "...",
-  "weaknesses": "...",
-  "suggestions": "...",
+  "strengths": "What the candidate did well (1-2 sentence)",
+  "weaknesses": "Main areas for improvement (1-2 sentence)", 
+  "suggestions": ["Most important suggestion", "Second suggestion if needed", "Third only if answer needs major work"],
   "score": "number from 1-10"
 }
+
+Each suggestion should be actionable and under 40 words.
     `;
 
     const result = await model.generateContent(prompt);

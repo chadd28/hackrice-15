@@ -319,7 +319,7 @@ function InterviewPage(): React.ReactElement {
         const introResponse = await ttsService.generateIntroduction(
           dataToUse.position || 'the position you are applying for',
           dataToUse.company || 'your target company',
-          'Ace AI' // ai name
+          'Prepper' // ai name
         );
         
         console.log('🔊 Playing introduction audio...');
@@ -754,7 +754,7 @@ function InterviewPage(): React.ReactElement {
               End Interview
             </button>
             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-              Ace AI Mock Interview
+              Prepr Mock Interview
             </h1>
           </div>
           <div className="flex items-center gap-3">
